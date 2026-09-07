@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Delivery address — KOMORA{% endblock %}
+{% block content %}
+<main class="v-account v-wrap">
+  <h1>Delivery address</h1>
+  <div class="v-checkout-grid">
+    <div class="v-order-card">
+      <h2>Your bag</h2>
+      {% for item in items %}
+        <div class="v-order-line">
+          <img src="{{ product_image_path(item.product_image1) }}" alt="">
+          <span class="t">{{ item.product_title }}</span>
+          <span class="p">₹{{ "{:,}".format(item.price) }}</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="v-order-card">
+      <h2>Where should we deliver?</h2>
+      <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {% if saved_address %}
+          <label class="v-addr-option">
+            <input type="radio" name="address_choice" value="saved" checked>
+            <span class="label">Deliver to saved address</span>
+            <span class="detail">{{ saved_address }} · {{ saved_mobile }}</span>
+          </label>
+        {% endif %}
+
+        <label class="v-addr-option">
+          <input type="radio" name="address_choice" value="new" {{ 'checked' if not saved_address else '' }}>
+          <span class="label">Use a different address</span>
+        </label>
+        <div class="v-addr-fields">
+          <div class="v-field">
+            <label for="address">Address</label>
+            <input class="v-input" type="text" name="address" id="address" placeholder="Enter delivery address">
+          </div>
+          <div class="v-field">
+            <label for="mobile">Contact number</label>
+            <input class="v-input" type="text" name="mobile" id="mobile" placeholder="Enter contact number">
+          </div>
+        </div>
+
+        <div class="v-form-actions">
+          <button type="submit" class="v-btn-komora block">Proceed to payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

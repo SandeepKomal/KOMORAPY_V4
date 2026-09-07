@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — KOMORA{% endblock %}
+{% block content %}
+<main class="v-catalogue v-wrap">
+  <div class="v-cat-head">
+    <h2>{{ title }}</h2>
+    <span class="v-result-count">{{ products|length }} item{{ 's' if products|length != 1 else '' }}</span>
+  </div>
+
+  {% if searched is not defined %}
+  <div class="v-controls-row">
+    <div class="v-chip-row">
+      <a href="{{ url_for('storefront.all_products') }}" class="v-chip {{ 'active' if not active_category and not active_brand else '' }}">All</a>
+      {% for c in categories %}
+        <a href="{{ url_for('storefront.all_products', category=c.category_id) }}" class="v-chip {{ 'active' if active_category == c.category_id else '' }}">{{ c.category_title }}</a>
+      {% endfor %}
+      {% for b in brands %}
+        <a href="{{ url_for('storefront.all_products', brand=b.brand_id) }}" class="v-chip {{ 'active' if active_brand == b.brand_id else '' }}">{{ b.brand_title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="v-grid">
+    {% if searched is defined and not searched %}
+      <div class="v-empty-row"><p>Search the drop</p><span>Use the search bar above to find something.</span></div>
+    {% elif not products %}
+      <div class="v-empty-row"><p>Nothing here</p><span>Try another category, brand, or keyword.</span></div>
+    {% else %}
+      {% for p in products %}
+        {% set low_stock = (p.product_id % 4 == 0) %}
+        <div class="v-card">
+          <div class="v-plate-visual">
+            <a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}">
+              <img src="{{ product_image_path(p.product_image1) }}" alt="{{ p.product_title }}" class="v-img-primary">
+              {% if p.product_image2 %}<img src="{{ product_image_path(p.product_image2) }}" alt="{{ p.product_title }}" class="v-img-hover">{% endif %}
+            </a>
+            {% if low_stock %}
+              <span class="v-badge-low">Low stock</span>
+            {% else %}
+              <span class="v-badge-tag">Drop 09</span>
+            {% endif %}
+            {% set is_wishlisted = p.product_id in wishlist_ids %}
+            <a href="{{ url_for('wishlist.remove' if is_wishlisted else 'wishlist.add', product_id=p.product_id) }}"
+               class="v-wish-btn {{ 'active' if is_wishlisted else '' }}" aria-label="Wishlist">
+              <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.7 2 5 5.6 5c2 0 3.4 1.1 4.4 2.7C11 6.1 12.4 5 14.4 5 18 5 19.6 8.7 22 11.9 19.5 16.4 12 21 12 21z"/></svg>
+            </a>
+          </div>
+          <div class="v-card-body">
+            <h3><a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}" style="color:inherit;">{{ p.product_title }}</a></h3>
+            <div class="v-meta-row">
+              <span class="v-price">₹{{ "{:,}".format(p.price) }}</span>
+              <a href="{{ url_for('cart.add', product_id=p.product_id) }}" class="v-add-btn">Add +</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

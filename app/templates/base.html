@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}KOMORA{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/komora.css') }}?v={{ asset_version }}">
+</head>
+<body class="komora" data-flash="{{ get_flashed_messages()|first|default('', true) }}">
+
+<div class="v-marquee"><div class="v-marquee-track">
+  <span>DROP 09 — LIVE NOW</span><span>KOMORA × NINE BRANDS</span><span>FREE SHIPPING OVER ₹5,000</span><span>RESTOCKS RARELY HAPPEN</span>
+  <span>DROP 09 — LIVE NOW</span><span>KOMORA × NINE BRANDS</span><span>FREE SHIPPING OVER ₹5,000</span><span>RESTOCKS RARELY HAPPEN</span>
+</div></div>
+
+<header class="v-header">
+  <div class="v-wrap v-header-inner">
+    <button class="v-menu-toggle" id="vMenuToggle" aria-label="Menu">☰</button>
+    <a href="{{ url_for('storefront.index') }}" class="v-mark">KOMORA</a>
+    <nav class="v-cats" id="vCatsList">
+      <a href="{{ url_for('storefront.all_products') }}" class="{{ 'active' if not request.args.get('category') else '' }}">All</a>
+      {% for c in categories %}
+        <a href="{{ url_for('storefront.all_products', category=c.category_id) }}">{{ c.category_title }}</a>
+      {% endfor %}
+    </nav>
+    <div class="v-actions">
+      <div class="v-cart-wrap">
+        {% if session.get('user_id') %}
+          <button class="v-icon-btn" id="vProfileToggle" aria-label="Profile">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+          </button>
+          <div class="v-profile-menu" id="vProfileMenu">
+            <div class="head">
+              <div class="welcome">Welcome</div>
+              <div class="name">{{ session['username'] }}</div>
+            </div>
+            <a href="{{ url_for('checkout.orders') }}">Orders</a>
+            <a href="{{ url_for('wishlist.view') }}">Wishlist</a>
+            <a href="{{ url_for('auth.profile_edit') }}">Edit profile</a>
+            <a href="{{ url_for('auth.contact') }}">Contact us</a>
+            <a href="{{ url_for('auth.logout') }}" class="danger">Logout</a>
+          </div>
+        {% else %}
+          <a class="v-icon-btn" href="{{ url_for('auth.login') }}" aria-label="Login">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+          </a>
+        {% endif %}
+      </div>
+      <button class="v-icon-btn" id="vSearchToggle" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div class="v-cart-wrap">
+        <a class="v-icon-btn" href="{{ url_for('wishlist.view') }}" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.7 2 5 5.6 5c2 0 3.4 1.1 4.4 2.7C11 6.1 12.4 5 14.4 5 18 5 19.6 8.7 22 11.9 19.5 16.4 12 21 12 21z"/></svg>
+          <span class="v-badge {{ 'zero' if wishlist_ids|length == 0 else '' }}">{{ wishlist_ids|length }}</span>
+        </a>
+      </div>
+      <div class="v-cart-wrap">
+        <a class="v-icon-btn" href="{{ url_for('cart.view') }}" aria-label="Bag">
+          <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          <span class="v-badge {{ 'zero' if cart_rows|length == 0 else '' }}">{{ cart_rows|length }}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="v-searchbar" id="vSearchBar">
+  <form action="{{ url_for('storefront.search') }}" method="get">
+    <input type="search" name="q" placeholder="Search the drop — try 'watch' or 'Nike'…" autocomplete="off">
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+{% block content %}{% endblock %}
+
+<footer class="v-footer">
+  <div class="v-wrap v-foot-grid">
+    <div>
+      <div class="v-mark">KOMORA</div>
+      <p style="max-width:34ch;margin-top:10px;">Small drops, sold once. No restocks announced in advance — follow to catch the next one.</p>
+    </div>
+    <div>Shipping &amp; returns<br>Size guide<br>Contact the crew</div>
+    <div>© {{ now_year }} KOMORA™. Redesigned storefront for the enconn2 catalogue.</div>
+  </div>
+</footer>
+
+<div class="v-toast" id="vToast">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="vToastMsg"></span>
+</div>
+
+<script src="{{ url_for('static', filename='js/komora.js') }}?v={{ asset_version }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

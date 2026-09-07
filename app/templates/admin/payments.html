@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}Payments — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Payments</h1>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead><tr><th>#</th><th>Invoice</th><th>Amount</th><th>Mode</th><th>Date</th></tr></thead>
+    <tbody>
+      {% for p in rows %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ p.invoice_number }}</td>
+          <td>₹{{ "{:,}".format(p.amount) }}</td>
+          <td>{{ p.payment_mode }}</td>
+          <td>{{ p.date }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="v-empty-note">No payments yet</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

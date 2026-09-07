@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Login — KOMORA{% endblock %}
+{% block content %}
+<main class="v-auth-wrap v-wrap">
+  <div class="v-auth-card">
+    <h1>Login</h1>
+    <p class="v-auth-sub">
+      {% if redirect_wishlist %}Log in to save this to your wishlist.
+      {% elif next_dest == 'wishlist' %}Log in to see your wishlist.
+      {% elif next_dest == 'cart' %}Log in to see your bag.
+      {% else %}Welcome back to the drop.{% endif %}
+    </p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="v-alert v-alert-error">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+
+    <form action="" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if redirect_wishlist %}<input type="hidden" name="redirect_wishlist" value="{{ redirect_wishlist }}">{% endif %}
+      {% if next_dest %}<input type="hidden" name="next" value="{{ next_dest }}">{% endif %}
+      <div class="v-field">
+        <label for="username">User name</label>
+        <input class="v-input" type="text" name="username" id="username" autocomplete="off" required>
+      </div>
+      <div class="v-field">
+        <label for="password">Password</label>
+        <input class="v-input" type="password" name="password" id="password" autocomplete="off" required>
+      </div>
+      <div class="v-form-actions">
+        <button type="submit" class="v-btn-komora block">Login</button>
+      </div>
+    </form>
+
+    <p class="v-auth-foot">Don't have an account?
+      <a href="{{ url_for('auth.register', redirect_wishlist=redirect_wishlist) if redirect_wishlist else url_for('auth.register') }}">Register</a>
+    </p>
+  </div>
+</main>
+{% endblock %}

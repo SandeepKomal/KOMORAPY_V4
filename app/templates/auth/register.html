@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Register — KOMORA{% endblock %}
+{% block content %}
+<main class="v-auth-wrap v-wrap">
+  <div class="v-auth-card wide">
+    <h1>Register</h1>
+    <p class="v-auth-sub">{% if redirect_wishlist %}Create an account to save this to your wishlist.{% else %}Create an account to check out.{% endif %}</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="v-alert v-alert-error">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+
+    <form action="" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="v-field-row">
+        <div class="v-field">
+          <label for="username">User name</label>
+          <input class="v-input" type="text" name="username" id="username" required>
+        </div>
+        <div class="v-field">
+          <label for="email">Email</label>
+          <input class="v-input" type="email" name="email" id="email" required>
+        </div>
+      </div>
+      <div class="v-field-row">
+        <div class="v-field">
+          <label for="password">Password</label>
+          <input class="v-input" type="password" name="password" id="password" minlength="8" placeholder="min. 8 characters" required>
+        </div>
+        <div class="v-field">
+          <label for="confirm_password">Confirm password</label>
+          <input class="v-input" type="password" name="confirm_password" id="confirm_password" required>
+        </div>
+      </div>
+      <div class="v-field">
+        <label for="address">Address</label>
+        <input class="v-input" type="text" name="address" id="address" required>
+      </div>
+      <div class="v-field">
+        <label for="mobile">Contact number</label>
+        <input class="v-input" type="text" name="mobile" id="mobile" required>
+      </div>
+      <div class="v-form-actions">
+        <button type="submit" class="v-btn-komora block">Register</button>
+      </div>
+    </form>
+
+    <p class="v-auth-foot">Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+  </div>
+</main>
+{% endblock %}

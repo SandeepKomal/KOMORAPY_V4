@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Your wishlist — KOMORA{% endblock %}
+{% block content %}
+<main class="v-catalogue v-wrap">
+  <div class="v-cat-head">
+    <h2>Your wishlist</h2>
+    <span class="v-result-count">{{ products|length }} item{{ 's' if products|length != 1 else '' }}</span>
+  </div>
+  <div class="v-grid">
+    {% if not products %}
+      <div class="v-empty-row"><p>Nothing saved yet</p><span>Tap the heart on a product to save it here.</span></div>
+    {% else %}
+      {% for p in products %}
+        <div class="v-card">
+          <div class="v-plate-visual">
+            <a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}">
+              <img src="{{ product_image_path(p.product_image1) }}" alt="{{ p.product_title }}" class="v-img-primary">
+              {% if p.product_image2 %}<img src="{{ product_image_path(p.product_image2) }}" alt="{{ p.product_title }}" class="v-img-hover">{% endif %}
+            </a>
+            <a href="{{ url_for('wishlist.remove', product_id=p.product_id) }}" class="v-remove-x" aria-label="Remove from wishlist">&times;</a>
+          </div>
+          <div class="v-card-body">
+            <h3><a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}" style="color:inherit;">{{ p.product_title }}</a></h3>
+            <div class="v-meta-row" style="margin-bottom:10px;">
+              <span class="v-price">₹{{ "{:,}".format(p.price) }}</span>
+            </div>
+            <a href="{{ url_for('wishlist.move_to_bag', product_id=p.product_id) }}" class="v-move-btn">Move to bag</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

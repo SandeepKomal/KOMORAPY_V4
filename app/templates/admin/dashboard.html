@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p style="color:var(--muted);font-size:13.5px;margin:-10px 0 6px;">Howdy, {{ session['admin_username'] }}.</p>
+<div class="v-dash-grid">
+  <a href="{{ url_for('admin.product_new') }}" class="v-dash-tile">Insert products</a>
+  <a href="{{ url_for('admin.products') }}" class="v-dash-tile">View products</a>
+  <a href="{{ url_for('admin.category_new') }}" class="v-dash-tile">Insert categories</a>
+  <a href="{{ url_for('admin.categories') }}" class="v-dash-tile">View categories</a>
+  <a href="{{ url_for('admin.brand_new') }}" class="v-dash-tile">Insert brands</a>
+  <a href="{{ url_for('admin.brands') }}" class="v-dash-tile">View brands</a>
+  <a href="{{ url_for('admin.orders') }}" class="v-dash-tile">All orders</a>
+  <a href="{{ url_for('admin.payments') }}" class="v-dash-tile">All payments</a>
+  <a href="{{ url_for('admin.users') }}" class="v-dash-tile">List users</a>
+</div>
+{% endblock %}

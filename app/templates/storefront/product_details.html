@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ product.product_title }} — KOMORA{% endblock %}
+{% block content %}
+<main class="v-wrap" style="padding:40px 0;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;">
+    <div class="v-pd-visual">
+      <img src="{{ product_image_path(product.product_image1) }}" alt="{{ product.product_title }}" style="width:100%;">
+    </div>
+    <div>
+      {% if brand %}<div class="v-pd-brand">{{ brand.brand_title }}</div>{% endif %}
+      <h1 class="v-pd-tag">{{ product.product_title }}</h1>
+      <div class="v-pd-price">₹{{ "{:,}".format(product.price) }}</div>
+      <p class="v-pd-desc">{{ product.product_description }}</p>
+      <div class="v-pd-actions" style="display:flex;gap:12px;margin-top:20px;">
+        <a href="{{ url_for('cart.add', product_id=product.product_id) }}" class="v-btn-komora">Add to bag</a>
+        {% set is_wishlisted = product.product_id in wishlist_ids %}
+        <a href="{{ url_for('wishlist.remove' if is_wishlisted else 'wishlist.add', product_id=product.product_id) }}"
+           class="v-icon-btn {{ 'active' if is_wishlisted else '' }}"
+           style="border:1px solid var(--line);width:48px;height:48px;{{ 'border-color:var(--pink);' if is_wishlisted else '' }}"
+           aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" style="{{ 'fill:var(--pink);stroke:var(--pink);' if is_wishlisted else '' }}"><path d="M12 21s-7.5-4.6-10-9.1C.4 8.7 2 5 5.6 5c2 0 3.4 1.1 4.4 2.7C11 6.1 12.4 5 14.4 5 18 5 19.6 8.7 22 11.9 19.5 16.4 12 21 12 21z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% if related %}
+  <div style="margin-top:60px;">
+    <h2 style="font-family:var(--display);text-transform:uppercase;margin-bottom:20px;">You might also like</h2>
+    <div class="v-grid">
+      {% for p in related %}
+        <div class="v-card">
+          <div class="v-plate-visual">
+            <a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}">
+              <img src="{{ product_image_path(p.product_image1) }}" alt="{{ p.product_title }}">
+            </a>
+          </div>
+          <div class="v-card-body">
+            <h3><a href="{{ url_for('storefront.product_details', product_id=p.product_id) }}" style="color:inherit;">{{ p.product_title }}</a></h3>
+            <div class="v-meta-row">
+              <span class="v-price">₹{{ "{:,}".format(p.price) }}</span>
+              <a href="{{ url_for('cart.add', product_id=p.product_id) }}" class="v-add-btn">Add +</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

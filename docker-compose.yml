@@ -1,0 +1,22 @@
+# RDS MySQL only — no local database container. Set DB_HOST/DB_USER/DB_PASS
+# in .env to your RDS instance (the same one the PHP version used — same
+# tables, same data, nothing to migrate).
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME:-mystore}
+      SECRET_KEY: ${SECRET_KEY}
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
+      FORCE_HTTPS_COOKIES: ${FORCE_HTTPS_COOKIES:-0}
+      UPLOAD_ROOT: /data/uploads
+    volumes:
+      - ./uploads/products:/data/uploads/products
+      - ./uploads/users:/data/uploads/users
+    restart: unless-stopped

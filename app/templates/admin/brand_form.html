@@ -1,0 +1,21 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if brand else 'Insert' }} brand — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>{{ 'Edit brand' if brand else 'Insert brand' }}</h1>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}<div class="v-alert v-alert-error">{{ messages[0] }}</div>{% endif %}
+{% endwith %}
+<div class="v-admin-card">
+  <form action="" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="v-field">
+      <label for="title">Brand name</label>
+      <input class="v-input" type="text" name="title" id="title" value="{{ brand.brand_title if brand else '' }}" required>
+    </div>
+    <div class="v-form-actions">
+      <button type="submit" class="v-btn-komora">{{ 'Update brand' if brand else 'Insert brand' }}</button>
+      {% if not brand %}<a href="{{ url_for('admin.brands') }}" class="v-btn-ghost" style="margin-left:8px;">View all brands</a>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

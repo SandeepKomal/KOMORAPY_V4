@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}Users — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Address</th><th>Mobile</th></tr></thead>
+    <tbody>
+      {% for u in rows %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.user_email }}</td>
+          <td>{{ u.user_address }}</td>
+          <td>{{ u.user_mobile }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="v-empty-note">No users available</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

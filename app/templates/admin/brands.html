@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% block title %}Brands — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Brands</h1>
+<div style="margin:-10px 0 20px;"><a href="{{ url_for('admin.brand_new') }}" class="v-btn-komora">Insert brand</a></div>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead><tr><th>ID</th><th>Brand</th><th></th></tr></thead>
+    <tbody>
+      {% for b in rows %}
+        <tr>
+          <td>{{ b.brand_id }}</td>
+          <td>{{ b.brand_title }}</td>
+          <td class="v-row-actions">
+            <a href="{{ url_for('admin.brand_edit', brand_id=b.brand_id) }}">Edit</a>
+            <form action="{{ url_for('admin.brand_delete', brand_id=b.brand_id) }}" method="post" onsubmit="return confirm('Delete this brand?');" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="v-empty-note">No brands yet</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

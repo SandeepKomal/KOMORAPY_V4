@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% block title %}Database — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Database</h1>
+<div class="v-db-tabs">
+  {% for key, meta in tables.items() %}
+    <a href="{{ url_for('admin.database', table=key) }}" class="{{ 'active' if active_table == key else '' }}">
+      {{ meta.label }} <span class="n">({{ counts[key] }})</span>
+    </a>
+  {% endfor %}
+</div>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead>
+      <tr>{% for c in cols %}<th>{{ c.replace('_', ' ')|title }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>{% for c in cols %}<td>{{ row[c] }}</td>{% endfor %}</tr>
+      {% else %}
+        <tr><td colspan="{{ cols|length }}" class="v-empty-note">No rows in this table</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

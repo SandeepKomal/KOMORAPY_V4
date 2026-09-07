@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block title %}Orders — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Orders</h1>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead><tr><th>#</th><th>Due</th><th>Invoice</th><th>Qty</th><th>Date</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for o in rows %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>₹{{ "{:,}".format(o.amount_due) }}</td>
+          <td>{{ o.invoice_number }}</td>
+          <td>{{ o.total_products }}</td>
+          <td>{{ o.order_date }}</td>
+          <td><span class="v-pill {{ 'completed' if o.order_status == 'Complete' else 'pending' }}">{{ o.order_status }}</span></td>
+          <td class="v-row-actions">
+            <form action="{{ url_for('admin.order_delete', order_id=o.order_id) }}" method="post" onsubmit="return confirm('Delete this order?');" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="v-empty-note">No orders yet</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

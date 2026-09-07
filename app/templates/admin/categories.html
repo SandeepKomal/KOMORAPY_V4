@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% block title %}Categories — KOMORA Admin{% endblock %}
+{% block content %}
+<h1>Categories</h1>
+<div style="margin:-10px 0 20px;"><a href="{{ url_for('admin.category_new') }}" class="v-btn-komora">Insert category</a></div>
+<div class="v-table-wrap">
+  <table class="v-table">
+    <thead><tr><th>ID</th><th>Category</th><th></th></tr></thead>
+    <tbody>
+      {% for c in rows %}
+        <tr>
+          <td>{{ c.category_id }}</td>
+          <td>{{ c.category_title }}</td>
+          <td class="v-row-actions">
+            <a href="{{ url_for('admin.category_edit', category_id=c.category_id) }}">Edit</a>
+            <form action="{{ url_for('admin.category_delete', category_id=c.category_id) }}" method="post" onsubmit="return confirm('Delete this category?');" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="v-empty-note">No categories yet</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

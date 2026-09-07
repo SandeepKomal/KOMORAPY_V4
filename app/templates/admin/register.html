@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Registration — KOMORA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/komora.css') }}?v={{ asset_version }}">
+</head>
+<body class="komora">
+<div class="v-marquee"><div class="v-marquee-track">
+  <span>KOMORA BACK OFFICE</span><span>ADMIN CONSOLE</span><span>MANAGE PRODUCTS, ORDERS &amp; MORE</span>
+  <span>KOMORA BACK OFFICE</span><span>ADMIN CONSOLE</span><span>MANAGE PRODUCTS, ORDERS &amp; MORE</span>
+</div></div>
+<main class="v-auth-wrap v-wrap">
+  <div class="v-auth-brand">
+    <a href="{{ url_for('admin.login') }}" class="v-mark">KOMORA</a>
+    <span class="v-admin-tag">Admin</span>
+  </div>
+  <div class="v-auth-card wide">
+    <h1>Admin registration</h1>
+    <p class="v-auth-sub">Create a back office account.</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="v-alert v-alert-error">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+
+    <form action="" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="v-field-row">
+        <div class="v-field">
+          <label for="username">Username</label>
+          <input class="v-input" type="text" name="username" id="username" required>
+        </div>
+        <div class="v-field">
+          <label for="email">Email</label>
+          <input class="v-input" type="text" name="email" id="email" required>
+        </div>
+      </div>
+      <div class="v-field-row">
+        <div class="v-field">
+          <label for="password">Password</label>
+          <input class="v-input" type="password" name="password" id="password" minlength="8" placeholder="min. 8 characters" required>
+        </div>
+        <div class="v-field">
+          <label for="confirm_password">Confirm password</label>
+          <input class="v-input" type="password" name="confirm_password" id="confirm_password" required>
+        </div>
+      </div>
+      <div class="v-form-actions">
+        <button type="submit" class="v-btn-komora block">Register</button>
+      </div>
+    </form>
+    <p class="v-auth-foot">Already have an account? <a href="{{ url_for('admin.login') }}">Login</a></p>
+  </div>
+</main>
+</body>
+</html>

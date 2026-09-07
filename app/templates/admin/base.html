@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}KOMORA Admin{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/komora.css') }}?v={{ asset_version }}">
+</head>
+<body class="komora" data-flash="{{ get_flashed_messages()|first|default('', true) }}">
+
+<div class="v-admin-topbar">
+  <div class="v-wrap">
+    <div style="display:flex;align-items:center;">
+      <a href="{{ url_for('admin.dashboard') }}" class="v-mark">KOMORA</a>
+      <span class="v-admin-tag">Admin</span>
+    </div>
+    <div class="v-admin-topbar-actions">
+      {% if session.get('admin_username') %}
+        <span>Howdy, {{ session['admin_username'] }}</span>
+      {% endif %}
+      <a href="{{ url_for('storefront.index') }}" class="v-store-btn">View store</a>
+      <a href="{{ url_for('admin.logout') }}" class="v-btn-ghost">Logout</a>
+    </div>
+  </div>
+</div>
+
+<div class="v-admin-shell">
+  <nav class="v-admin-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active_nav == 'dashboard' else '' }}">Dashboard</a>
+    <a href="{{ url_for('admin.products') }}" class="{{ 'active' if active_nav == 'products' else '' }}">Products</a>
+    <a href="{{ url_for('admin.product_new') }}" class="{{ 'active' if active_nav == 'insert_product' else '' }}">Add product</a>
+    <a href="{{ url_for('admin.categories') }}" class="{{ 'active' if active_nav == 'categories' else '' }}">Categories</a>
+    <a href="{{ url_for('admin.brands') }}" class="{{ 'active' if active_nav == 'brands' else '' }}">Brands</a>
+    <a href="{{ url_for('admin.orders') }}" class="{{ 'active' if active_nav == 'orders' else '' }}">Orders</a>
+    <a href="{{ url_for('admin.payments') }}" class="{{ 'active' if active_nav == 'payments' else '' }}">Payments</a>
+    <a href="{{ url_for('admin.users') }}" class="{{ 'active' if active_nav == 'users' else '' }}">Users</a>
+    <a href="{{ url_for('admin.database') }}" class="{{ 'active' if active_nav == 'database' else '' }}">Database</a>
+  </nav>
+  <main class="v-admin-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<div class="v-toast" id="vToast">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="vToastMsg"></span>
+</div>
+<script src="{{ url_for('static', filename='js/komora.js') }}?v={{ asset_version }}"></script>
+</body>
+</html>

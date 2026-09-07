@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Payment — KOMORA{% endblock %}
+{% block content %}
+<main class="v-account v-wrap">
+  <h1>Payment</h1>
+  <div class="v-checkout-grid">
+    <div class="v-order-card">
+      <h2>Deliver to</h2>
+      <p style="font-size:13.5px;margin:0 0 20px;">
+        {{ checkout_address }} · {{ checkout_mobile }}
+        <a href="{{ url_for('checkout.address') }}" style="color:var(--komora);font-weight:600;margin-left:8px;">Change</a>
+      </p>
+
+      <h2>Your bag</h2>
+      {% for item in items %}
+        <div class="v-order-line">
+          <img src="{{ product_image_path(item.product_image1) }}" alt="">
+          <span class="t">{{ item.product_title }}{{ ' × ' ~ item.quantity if item.quantity > 1 else '' }}</span>
+          <span class="p">₹{{ "{:,}".format(item.line_total) }}</span>
+        </div>
+      {% endfor %}
+      <div class="v-order-total"><span>Total</span><span>₹{{ "{:,}".format(total) }}</span></div>
+    </div>
+
+    <div class="v-order-card">
+      <h2>Pay</h2>
+      <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="v-field">
+          <label for="payment_mode">Mode of payment</label>
+          <select name="payment_mode" class="v-select" id="payment_mode" required>
+            <option value="">Select payment mode</option>
+            <option>UPI</option>
+            <option>NetBanking</option>
+            <option>Debit Card / Credit Card</option>
+            <option>Cash on Delivery</option>
+          </select>
+        </div>
+        <div class="v-form-actions">
+          <button type="submit" class="v-btn-komora block">Place order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

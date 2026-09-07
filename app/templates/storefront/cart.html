@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Your bag — KOMORA{% endblock %}
+{% block content %}
+<main class="v-cart-page v-wrap">
+  <h1 style="font-family:var(--display);text-transform:uppercase;">Your bag</h1>
+
+  {% if not rows %}
+    <div class="v-cart-empty">
+      <p>Your bag is empty</p>
+      <span>Add a piece from the drop to see it here.</span>
+      <div style="margin-top:20px;"><a href="{{ url_for('storefront.index') }}" class="v-btn-komora">Shop the drop</a></div>
+    </div>
+  {% else %}
+    <form action="{{ url_for('cart.view') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="v-cart-table-wrap">
+        <div class="v-cart-row head">
+          <span></span><span>Piece</span><span>Quantity</span><span>Price</span><span></span><span>Remove</span>
+        </div>
+        {% for line in rows %}
+          <div class="v-cart-row">
+            <img src="{{ product_image_path(line.product_image1) }}" alt="">
+            <div>
+              <div class="v-line-title">{{ line.product_title }}</div>
+            </div>
+            <div class="v-qty-stepper">
+              <button type="button" data-step="-1">−</button>
+              <input type="number" name="quantity_{{ line.product_id }}" min="1" value="{{ line.cart_quantity if line.cart_quantity > 0 else 1 }}">
+              <button type="button" data-step="1">+</button>
+            </div>
+            <span class="v-line-price">₹{{ "{:,}".format(line.line_total) }}</span>
+            <button type="submit" name="update_cart" value="{{ line.product_id }}" class="v-cart-btn">Update</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);">
+              <input type="checkbox" name="remove_item" value="{{ line.product_id }}"> Remove
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="v-cart-summary">
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Subtotal</div>
+          <div class="amt">₹{{ "{:,}".format(total) }}</div>
+        </div>
+        <div class="actions">
+          <button type="submit" name="remove_cart" value="1" class="v-cart-btn danger">Remove selected</button>
+          <a href="{{ url_for('storefront.index') }}" class="v-btn-ghost">Continue shopping</a>
+          <a href="{{ url_for('checkout.address') }}" class="v-btn-komora">Checkout</a>
+        </div>
+      </div>
+    </form>
+  {% endif %}
+</main>
+{% endblock %}

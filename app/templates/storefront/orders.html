@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Your orders — KOMORA{% endblock %}
+{% block content %}
+<main class="v-account v-wrap">
+  <h1>Your orders</h1>
+  <div class="v-table-wrap">
+    <table class="v-table">
+      <thead><tr><th>#</th><th>Product</th><th>Amount</th><th>Qty</th><th>Invoice</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><img src="{{ product_image_path(row.product_image1) }}" style="width:44px;height:52px;object-fit:contain;background:var(--surface2);"></td>
+            <td>₹{{ "{:,}".format(row.amount_due) }}</td>
+            <td>{{ row.total_products }}</td>
+            <td>{{ row.invoice_number }}</td>
+            <td>{{ row.order_date }}</td>
+            <td><span class="v-pill {{ 'completed' if row.order_status == 'Complete' else 'pending' }}">{{ row.order_status }}</span></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="v-empty-note">No orders yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}
