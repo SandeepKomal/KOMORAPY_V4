@@ -58,7 +58,16 @@ class TestUpdateQuantity:
         """Regression test: with a shared/unscoped field name, updating one
         row could silently update the wrong product. Each row's quantity
         field must be uniquely named per product_id."""
-        mock_db["query_all"].return_value = []  # for the final re-render
+        # return_value (not side_effect) so it doesn't matter how many
+        # times the page gets rendered (once to fetch the csrf token,
+        # once more after the POST redirects back)
+        mock_db["query_all"].return_value = [
+            {"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1},
+            {"product_id": 2, "ip_address": "127.0.0.1", "quantity": 1},
+        ]
+        mock_db["query_one"].return_value = {
+            "product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100"),
+        }
         token = get_csrf_token(logged_in_customer, "/cart")
         resp = logged_in_customer.post("/cart", data={
             "csrf_token": token,
@@ -77,7 +86,10 @@ class TestUpdateQuantity:
 
 class TestRemoveFromCart:
     def test_remove_selected_deletes_each_checked_row(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = []
+        mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
+        mock_db["query_one"].return_value = {
+            "product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100"),
+        }
         token = get_csrf_token(logged_in_customer, "/cart")
         resp = logged_in_customer.post("/cart", data={
             "csrf_token": token,
@@ -88,7 +100,10 @@ class TestRemoveFromCart:
         assert mock_db["execute"].call_count == 2
 
     def test_remove_with_nothing_checked_shows_prompt(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = []
+        mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
+        mock_db["query_one"].return_value = {
+            "product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100"),
+        }
         token = get_csrf_token(logged_in_customer, "/cart")
         resp = logged_in_customer.post("/cart", data={
             "csrf_token": token, "remove_cart": "1",

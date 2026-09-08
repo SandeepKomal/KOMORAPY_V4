@@ -109,7 +109,11 @@ class TestProductCRUD:
         assert resp.status_code == 403
 
     def test_delete_removes_product(self, logged_in_admin, mock_db):
-        token = get_csrf_token(logged_in_admin, "/admin/products")
+        # fetch the CSRF token from a page that always has a form
+        # (the products *list* only has one when rows exist — using the
+        # new-product form sidesteps needing to seed fake product rows
+        # just to get a token)
+        token = get_csrf_token(logged_in_admin, "/admin/products/new")
         resp = logged_in_admin.post("/admin/products/1/delete", data={"csrf_token": token}, follow_redirects=False)
         assert resp.status_code == 302
         assert mock_db["execute"].called

@@ -180,7 +180,11 @@ class TestProfileEdit:
         assert b"testuser" in resp.data
 
     def test_successful_update(self, logged_in_customer, mock_db, sample_customer):
-        mock_db["query_one"].side_effect = [sample_customer, None]  # load, then dup-check finds nothing
+        # 3 query_one calls total: the GET (fetching the csrf token) loads
+        # the user once, then the POST loads the user again + runs the
+        # duplicate-check — every GET made just to grab a token still runs
+        # the full view function, so it consumes side_effect entries too.
+        mock_db["query_one"].side_effect = [sample_customer, sample_customer, None]
         token = get_csrf_token(logged_in_customer, "/profile/edit")
         resp = logged_in_customer.post("/profile/edit", data={
             "username": "testuser", "email": "updated@example.com",
@@ -191,7 +195,7 @@ class TestProfileEdit:
 
     def test_duplicate_email_rejected(self, logged_in_customer, mock_db, sample_customer):
         other_user = dict(sample_customer, user_id=2, username="other", user_email="taken@example.com")
-        mock_db["query_one"].side_effect = [sample_customer, other_user]
+        mock_db["query_one"].side_effect = [sample_customer, sample_customer, other_user]
         token = get_csrf_token(logged_in_customer, "/profile/edit")
         resp = logged_in_customer.post("/profile/edit", data={
             "username": "testuser", "email": "taken@example.com",
