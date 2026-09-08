@@ -41,8 +41,27 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
       - name: Upload PDF report as build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: sonarqube-report
           path: sonarqube-report.pdf
           retention-days: 90
+
+      - name: Email PDF report to code owners
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "SonarQube Report — ${{ github.repository }} (${{ github.ref_name }})"
+          body: |
+            Automated SonarQube analysis for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
+
+            Full metrics, quality gate status, and open issues are in the attached PDF.
+
+            Triggered by: ${{ github.actor }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: sonarqube-report.pdf
