@@ -1,0 +1,67 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: pytest
+        # generates coverage.xml — sonar-project.properties reads this
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Generate SonarQube PDF report
+        run: python scripts/generate_sonar_report.py
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: komora-py
+          # only needed if you're on SonarCloud — delete this line for self-hosted SonarQube
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+      - name: Upload PDF report as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-report
+          path: sonarqube-report.pdf
+          retention-days: 90
+
+      - name: Email PDF report to code owners
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "SonarQube Report — ${{ github.repository }} (${{ github.ref_name }})"
+          body: |
+            Automated SonarQube analysis for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
+
+            Full metrics, quality gate status, and open issues are in the attached PDF.
+
+            Triggered by: ${{ github.actor }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: sonarqube-report.pdf
