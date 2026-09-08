@@ -1,0 +1,19 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Uploaded content (kept out of git, same as the PHP repo's approach)
+uploads/products/*
+uploads/users/*
+!uploads/products/.gitkeep
+!uploads/users/.gitkeep
+
+.DS_Store
+*.log
