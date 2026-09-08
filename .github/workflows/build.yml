@@ -24,11 +24,25 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest
-        # this generates coverage.xml — without it, sonar-project.properties
-        # has nothing real to point at, and coverage stays 0% no matter
-        # how many tests exist
+        # generates coverage.xml — sonar-project.properties reads this
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Generate SonarQube PDF report
+        run: python scripts/generate_sonar_report.py
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: komora-py
+          # only needed if you're on SonarCloud — delete this line for self-hosted SonarQube
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+      - name: Upload PDF report as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-report
+          path: sonarqube-report.pdf
+          retention-days: 90
