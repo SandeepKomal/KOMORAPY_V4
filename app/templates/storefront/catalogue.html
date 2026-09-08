@@ -24,6 +24,8 @@
   <div class="v-grid">
     {% if searched is defined and not searched %}
       <div class="v-empty-row"><p>Search the drop</p><span>Use the search bar above to find something.</span></div>
+    {% elif searched is defined and searched and not products %}
+      <div class="v-empty-row"><p>No results found</p><span>Nothing matched "{{ query }}" — try a different keyword.</span></div>
     {% elif not products %}
       <div class="v-empty-row"><p>Nothing here</p><span>Try another category, brand, or keyword.</span></div>
     {% else %}

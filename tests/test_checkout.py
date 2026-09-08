@@ -35,10 +35,20 @@ class TestAddressStep:
 
     def test_submitting_new_address_advances_to_payment(self, logged_in_customer, mock_db):
         mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
-        mock_db["query_one"].side_effect = [
-            {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")},
-            {"user_address": "", "user_mobile": ""},
-        ]
+
+        # This route gets hit twice — once by get_csrf_token()'s GET, once
+        # by the actual POST — so a fixed-position side_effect list breaks
+        # (the GET consumes entries meant for the POST). Route by SQL
+        # content instead, which works correctly no matter how many times
+        # the view runs.
+        def query_one_router(sql, params=()):
+            if "FROM products" in sql:
+                return {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")}
+            if "user_address" in sql:
+                return {"user_address": "", "user_mobile": ""}
+            return None
+        mock_db["query_one"].side_effect = query_one_router
+
         token = get_csrf_token(logged_in_customer, "/checkout/address")
         resp = logged_in_customer.post("/checkout/address", data={
             "address_choice": "new", "address": "42 New Ave", "mobile": "8888888888",
@@ -51,10 +61,15 @@ class TestAddressStep:
 
     def test_missing_address_shows_error(self, logged_in_customer, mock_db):
         mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
-        mock_db["query_one"].side_effect = [
-            {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")},
-            {"user_address": "", "user_mobile": ""},
-        ]
+
+        def query_one_router(sql, params=()):
+            if "FROM products" in sql:
+                return {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")}
+            if "user_address" in sql:
+                return {"user_address": "", "user_mobile": ""}
+            return None
+        mock_db["query_one"].side_effect = query_one_router
+
         token = get_csrf_token(logged_in_customer, "/checkout/address")
         resp = logged_in_customer.post("/checkout/address", data={
             "address_choice": "new", "address": "", "mobile": "", "csrf_token": token,
