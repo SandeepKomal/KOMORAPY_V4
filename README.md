@@ -1,6 +1,7 @@
 ## USER INTERFACE
 DB_PASSWORD="komal@123"
 TOKEN= "kjbdhfdjhbfjhbfjhbfjbfjhb123"
+password="ADMIN"
 <img width="1887" height="851" alt="image" src="https://github.com/user-attachments/assets/6ab06774-ec88-436e-a898-c37850d1baff" />
 
 <img width="1875" height="852" alt="image" src="https://github.com/user-attachments/assets/7f40373d-477f-4bfe-ad25-810a5199b0fc" />
