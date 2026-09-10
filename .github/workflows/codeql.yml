@@ -1,0 +1,75 @@
+name: CodeQL SAST Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # weekly scan even if nothing's pushed, catches newly-disclosed
+    # vulnerability patterns in existing code
+    - cron: '30 1 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze (Python)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # required to upload CodeQL results
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          build-mode: none   # Python is interpreted — no build step needed
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install report dependencies
+        run: pip install requests reportlab
+
+      - name: Generate CodeQL PDF report
+        run: python scripts/generate_codeql_report.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Upload CodeQL PDF report as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-report
+          path: codeql-report.pdf
+          retention-days: 90
+
+      - name: Email CodeQL report
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "CodeQL SAST Report — ${{ github.repository }} (${{ github.ref_name }})"
+          body: |
+            Automated CodeQL security scan for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
+
+            Full list of findings (bugs and vulnerabilities detected by static analysis) is in the attached PDF.
+
+            Triggered by: ${{ github.actor }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: codeql-report.pdf
