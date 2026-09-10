@@ -153,7 +153,7 @@ def build_pdf(measures, quality_gate, issues, total_issues, out_path):
     # top issues
     story.append(Paragraph(f"Top Issues (showing {len(issues)} of {total_issues} open)", h2))
     if not issues:
-        story.append(Paragraph("No open Blocker/Critical/Major issues.", body))
+        story.append(Paragraph("No open Blocker/Critical/Major issues. 🎉", body))
     else:
         cell_style = ParagraphStyle("Cell", parent=body, fontSize=8, leading=10)
         issue_rows = [["Severity", "Type", "File", "Message"]]
