@@ -4,7 +4,7 @@ cryptography==43.0.1
 bcrypt==4.2.0
 gunicorn==22.0.0
 python-dotenv==1.0.1
-Pillow==10.4.0
+Pillow==12.3.0
 #requirements-dev.txt 
 pytest==8.3.3
 pytest-cov==5.0.0
