@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -35,7 +35,7 @@ jobs:
           category: "/language:python"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -49,14 +49,14 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Upload CodeQL PDF report as build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: codeql-report
           path: codeql-report.pdf
           retention-days: 90
 
       - name: Email CodeQL report
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v20
         with:
           server_address: smtp.gmail.com
           server_port: 465
