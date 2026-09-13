@@ -1,6 +1,7 @@
 """These test pure/isolated logic directly, without going through a full
 HTTP request where it's not needed — faster and more precise than routing
 everything through the test client."""
+import pytest
 from app.helpers import product_image_path, user_image_path
 
 
@@ -119,13 +120,15 @@ class TestCsrf:
 
     def test_check_rejects_missing_token(self, app):
         from app.helpers import csrf_check
-        from flask import request
+        from werkzeug.exceptions import Forbidden
         with app.test_request_context("/", method="POST", data={}):
-            try:
+            # pytest.raises is the correct idiom for "this should raise" —
+            # the old try/except-with-assert-inside pattern is fragile:
+            # AssertionError is itself an Exception, so a broad `except
+            # Exception` can silently swallow a failed assertion instead
+            # of letting the test fail loudly.
+            with pytest.raises(Forbidden):
                 csrf_check()
-                assert False, "should have aborted"
-            except Exception as e:
-                assert "403" in str(e) or getattr(e, "code", None) == 403
 
     def test_check_accepts_matching_token(self, app):
         from app.helpers import csrf_token, csrf_check
