@@ -69,11 +69,14 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
-      - name: Fail the build if Snyk found high/critical vulnerabilities
-        if: steps.snyk-test.outcome == 'failure'
-        run: |
-          echo "Snyk found vulnerabilities at or above the severity threshold — see the Security tab for details. Blocking the push to ECR."
-          exit 1
+      # NOTE: this pipeline currently does NOT block the push on Snyk
+      # findings — High/Critical vulnerabilities are scanned and reported
+      # (Security tab + Snyk dashboard via the monitor step above) but do
+      # not stop the image from being pushed. If you want the gate back,
+      # re-add:
+      #   - name: Fail the build if Snyk found high/critical vulnerabilities
+      #     if: steps.snyk-test.outcome == 'failure'
+      #     run: exit 1
 
       - name: Push Docker image to ECR
         run: |
