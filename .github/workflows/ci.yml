@@ -6,67 +6,84 @@ on:
       - main
 
 jobs:
-  build-scan-push:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write   # required to upload the Snyk SARIF results to the Security tab
-      actions: read
+      id-token: write         # required for role-to-assume (OIDC) to AWS to work at all
+      security-events: write  # required to upload Snyk's SARIF results to the Security tab
     env:
-      ECR_REPOSITORY: komora-py
+      # Hardcoded, NOT derived from the repo name — your GitHub repo is
+      # "KOMORAPY_V4" (uppercase, underscore), but Docker image names must
+      # be lowercase, and your actual ECR repository is named "komora",
+      # which doesn't match the GitHub repo name anyway. Using
+      # github.event.repository.name here would fail the docker build
+      # outright with an "invalid reference format" error.
+      ECR_REPOSITORY: komora
       IMAGE_TAG: ${{ github.run_number }}
+
     steps:
-      - name: Checkout code
+      - name: Clone repository
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ASSUME_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          docker build \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-            .
+      - name: Export ECR registry to env
+        run: echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
 
-      - name: Run Snyk to check Docker image for vulnerabilities
-        id: snyk
-        continue-on-error: true   # let the SARIF upload below run regardless of findings —
-                                  # the explicit "Fail build" step further down is what
-                                  # actually gates the push, not this one
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Snyk container monitor (push to dashboard)
         uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
+          command: monitor
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          args: --severity-threshold=high --sarif-file-output=snyk.sarif --file=Dockerfile
+          args: --file=Dockerfile
+
+      - name: Snyk container test (fail build on High+)
+        id: snyk-test
+        continue-on-error: true   # let the SARIF upload + explicit fail-check below run
+                                  # regardless of outcome — this flag alone must NEVER
+                                  # be the only thing standing between a failed scan and
+                                  # a push, or the gate does nothing
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          args: --file=Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload Snyk results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
-        if: always()   # upload findings for review even if the scan "failed" (found issues)
+        if: always()
         with:
           sarif_file: snyk.sarif
 
       - name: Fail the build if Snyk found high/critical vulnerabilities
-        if: steps.snyk.outcome == 'failure'
+        if: steps.snyk-test.outcome == 'failure'
         run: |
           echo "Snyk found vulnerabilities at or above the severity threshold — see the Security tab for details. Blocking the push to ECR."
           exit 1
 
-      - name: Push image to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      - name: Push Docker image to ECR
         run: |
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "Pushed image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Docker Cleanup
+        if: always()
+        run: |
+          # Remove dangling images and untagged layers from builds
+          docker image prune -f
