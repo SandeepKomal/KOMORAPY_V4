@@ -1,30 +1,37 @@
 name: Build, Scan, and Push to ECR
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build"]   # must match the `name:` field inside build.yml exactly
+    types:
+      - completed
     branches:
       - main
 
 jobs:
   build:
+    # only proceed if the "Build" workflow (tests + SonarQube) actually
+    # passed on this commit — this is what makes the ordering real,
+    # not just cosmetic
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write         # required for role-to-assume (OIDC) to AWS to work at all
       security-events: write  # required to upload Snyk's SARIF results to the Security tab
     env:
-      # Hardcoded, NOT derived from the repo name — your GitHub repo is
-      # "KOMORAPY_V4" (uppercase, underscore), but Docker image names must
-      # be lowercase, and your actual ECR repository is named "komora",
-      # which doesn't match the GitHub repo name anyway. Using
-      # github.event.repository.name here would fail the docker build
-      # outright with an "invalid reference format" error.
       ECR_REPOSITORY: komora
       IMAGE_TAG: ${{ github.run_number }}
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+        with:
+          # pin to the EXACT commit that "Build" just tested — without
+          # this, checkout would grab whatever is currently HEAD of main,
+          # which could be a newer, untested commit if something else
+          # landed in the meantime
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -54,10 +61,7 @@ jobs:
 
       - name: Snyk container test (fail build on High+)
         id: snyk-test
-        continue-on-error: true   # let the SARIF upload + explicit fail-check below run
-                                  # regardless of outcome — this flag alone must NEVER
-                                  # be the only thing standing between a failed scan and
-                                  # a push, or the gate does nothing
+        continue-on-error: true
         uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -85,5 +89,4 @@ jobs:
       - name: Docker Cleanup
         if: always()
         run: |
-          # Remove dangling images and untagged layers from builds
           docker image prune -f
