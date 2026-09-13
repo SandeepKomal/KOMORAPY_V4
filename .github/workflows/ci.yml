@@ -10,14 +10,10 @@ on:
 
 jobs:
   build:
-    # only proceed if the "Build" workflow (tests + SonarQube) actually
-    # passed on this commit — this is what makes the ordering real,
-    # not just cosmetic
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write         # required for role-to-assume (OIDC) to AWS to work at all
       security-events: write  # required to upload Snyk's SARIF results to the Security tab
     env:
       ECR_REPOSITORY: komora
@@ -27,16 +23,13 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
-          # pin to the EXACT commit that "Build" just tested — without
-          # this, checkout would grab whatever is currently HEAD of main,
-          # which could be a newer, untested commit if something else
-          # landed in the meantime
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ASSUME_ROLE }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
