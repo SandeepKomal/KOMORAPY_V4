@@ -8,6 +8,10 @@ on:
 jobs:
   build-scan-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # required to upload the Snyk SARIF results to the Security tab
+      actions: read
     env:
       ECR_REPOSITORY: komora-py
       IMAGE_TAG: ${{ github.run_number }}
@@ -48,7 +52,7 @@ jobs:
           args: --severity-threshold=high --sarif-file-output=snyk.sarif --file=Dockerfile
 
       - name: Upload Snyk results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()   # upload findings for review even if the scan "failed" (found issues)
         with:
           sarif_file: snyk.sarif
