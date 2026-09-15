@@ -3,7 +3,12 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # System deps: Pillow needs a few image libraries to build/run correctly.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Also upgrade all OS packages to their current patched versions — the
+# base image tag can lag behind on Debian security patches (this is what
+# Snyk's container scan flagged: perl, zlib, sqlite3, gzip, attr, acl
+# CVEs baked into the base image, not anything in our own application code).
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
     libjpeg62-turbo-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
