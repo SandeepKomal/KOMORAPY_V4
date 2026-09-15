@@ -58,6 +58,25 @@ class TestCoverCrop:
 
 
 class TestSaveUpload:
+    def test_content_detection_overrides_a_lying_filename(self, tmp_path):
+        """The path-injection fix: the saved extension must come from
+        Pillow's own read of the file's actual bytes, never from the
+        client-supplied filename — even when that filename claims a
+        different (also-valid) image type than what's really inside."""
+        import io
+        from PIL import Image
+        from werkzeug.datastructures import FileStorage
+        from app.helpers import save_upload
+
+        buf = io.BytesIO()
+        Image.new("RGB", (50, 50), "blue").save(buf, format="PNG")
+        buf.seek(0)
+        upload = FileStorage(stream=buf, filename="fake.jpg")  # says .jpg, is really PNG
+
+        result = save_upload(upload, str(tmp_path))
+        assert result is not None
+        assert result.endswith(".png"), f"expected real content (.png) to win over the lying filename, got {result}"
+
     def test_rejects_disallowed_extension(self, tmp_path, mocker):
         from app.helpers import save_upload
         fake_file = mocker.MagicMock()
@@ -138,3 +157,35 @@ class TestCsrf:
             from flask import session as flask_session
             flask_session["csrf_token"] = token
             csrf_check()  # should not raise
+
+
+class TestSafeRedirectTarget:
+    """The open-redirect fix: request.referrer (or any client-supplied
+    URL) must only be honored if it's same-origin — never followed to an
+    external domain, which is exactly the phishing setup CodeQL flagged
+    on the cart/wishlist redirect targets."""
+
+    def test_same_origin_relative_path_is_honored(self, app):
+        from app.helpers import safe_redirect_target
+        with app.test_request_context("/", base_url="https://example.com"):
+            assert safe_redirect_target("/product/5", "/fallback") == "/product/5"
+
+    def test_same_origin_absolute_url_is_honored(self, app):
+        from app.helpers import safe_redirect_target
+        with app.test_request_context("/", base_url="https://example.com"):
+            result = safe_redirect_target("https://example.com/cart", "/fallback")
+            assert result == "https://example.com/cart"
+
+    def test_external_domain_is_rejected(self, app):
+        """The actual attack this closes: an attacker-controlled Referer
+        pointing at a lookalike phishing page must never be followed."""
+        from app.helpers import safe_redirect_target
+        with app.test_request_context("/", base_url="https://example.com"):
+            result = safe_redirect_target("https://evil-phishing-site.com/fake-login", "/fallback")
+            assert result == "/fallback"
+
+    def test_missing_referrer_uses_fallback(self, app):
+        from app.helpers import safe_redirect_target
+        with app.test_request_context("/", base_url="https://example.com"):
+            assert safe_redirect_target(None, "/fallback") == "/fallback"
+            assert safe_redirect_target("", "/fallback") == "/fallback"
