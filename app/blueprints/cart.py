@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
 
 from ..db import query_one, execute
-from ..helpers import get_ip, get_cart_rows, add_to_cart, csrf_check, get_logged_in_user_id
+from ..helpers import get_ip, get_cart_rows, add_to_cart, csrf_check, get_logged_in_user_id, safe_redirect_target
 
 bp = Blueprint("cart", __name__)
 
@@ -13,7 +13,7 @@ def add(product_id):
         flash(f"Bag updated — now {new_quantity} in your bag")
     else:
         flash("Added to your bag")
-    return redirect(request.referrer or url_for("storefront.index"))
+    return redirect(safe_redirect_target(request.referrer, url_for("storefront.index")))
 
 
 @bp.route("/cart", methods=["GET", "POST"])

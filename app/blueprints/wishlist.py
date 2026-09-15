@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 
 from ..db import query_one, query_all, execute
-from ..helpers import get_logged_in_user_id, get_ip, add_to_cart
+from ..helpers import get_logged_in_user_id, get_ip, add_to_cart, safe_redirect_target
 
 bp = Blueprint("wishlist", __name__)
 
@@ -30,7 +30,7 @@ def add(product_id):
         "INSERT IGNORE INTO wishlist_details (user_id, product_id) VALUES (%s, %s)",
         (user_id, product_id),
     )
-    return redirect(request.referrer or url_for("wishlist.view"))
+    return redirect(safe_redirect_target(request.referrer, url_for("wishlist.view")))
 
 
 @bp.route("/wishlist/remove/<int:product_id>")

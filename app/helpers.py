@@ -3,6 +3,7 @@ import re
 import secrets
 import time
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 from flask import session, request, current_app
 
@@ -19,6 +20,24 @@ def get_ip():
     if request.headers.get("X-Forwarded-For"):
         return request.headers.get("X-Forwarded-For").split(",")[0].strip()
     return request.remote_addr or "0.0.0.0"
+
+
+def safe_redirect_target(candidate_url, fallback):
+    """Only honor a redirect target if it's same-origin (a relative path,
+    or an absolute URL whose host matches this request's own host) —
+    never blindly follow request.referrer or any other client-supplied
+    URL to an external domain. This closes the "open redirect" class of
+    bug: a malicious page links to a real endpoint here, the browser
+    sends that malicious page's URL as the Referer, and without this
+    check the app would redirect the user right back to it — a classic
+    setup for post-click phishing (user briefly hits the real site, then
+    gets silently bounced to a fake login page)."""
+    if not candidate_url:
+        return fallback
+    parsed = urlparse(candidate_url)
+    if parsed.netloc and parsed.netloc != request.host:
+        return fallback
+    return candidate_url
 
 
 # ---------- CSRF ----------
@@ -131,6 +150,14 @@ def get_logged_in_admin_id():
 # ---------- allowed image upload extensions ----------
 ALLOWED_IMAGE_EXT = {"jpg", "jpeg", "png", "gif", "webp"}
 
+# Maps Pillow's own content-detected format to the extension we save with —
+# deliberately NOT derived from the client-supplied filename at all, so the
+# saved filename has zero relationship to anything an attacker sent. The
+# filename-based extension check below is kept only as a cheap early
+# rejection (skip loading obviously-wrong files into Pillow); it never
+# influences what gets written to disk.
+_FORMAT_TO_EXT = {"JPEG": "jpg", "PNG": "png", "GIF": "gif", "WEBP": "webp"}
+
 
 def _cover_crop(img, target_size):
     """Resize + center-crop an image to exactly target_size, filling the
@@ -176,7 +203,12 @@ def save_upload(file_storage, dest_dir, target_size=None):
         file_storage.stream.seek(0)
         img = Image.open(file_storage.stream)
         img.load()
+        detected_format = img.format  # Pillow's own read of the actual bytes, e.g. "JPEG" — not the filename
     except Exception:
+        return None
+
+    safe_ext = _FORMAT_TO_EXT.get(detected_format)
+    if safe_ext is None:
         return None
 
     os.makedirs(dest_dir, exist_ok=True)
@@ -186,7 +218,7 @@ def save_upload(file_storage, dest_dir, target_size=None):
         new_name = secrets.token_hex(8) + ".jpg"
         img.save(os.path.join(dest_dir, new_name), "JPEG", quality=88)
     else:
-        new_name = secrets.token_hex(8) + "." + ext
+        new_name = secrets.token_hex(8) + "." + safe_ext
         file_storage.stream.seek(0)
         file_storage.save(os.path.join(dest_dir, new_name))
 

@@ -347,6 +347,20 @@ TABLES = {
     "login_attempts": {"label": "Login attempts", "cols": ["id", "identifier", "attempted_at"]},
 }
 
+# The actual SELECT strings are pre-built ONCE, here, at import time — from
+# the hardcoded TABLES dict above, never from a request. A request can only
+# ever select which pre-built constant to use (by dict key), never
+# influence the SQL text itself. This is deliberately more restrictive
+# than "validate then interpolate": there's no f-string built from a
+# variable at request time for a static analyzer (or a future editor of
+# this code) to have to reason about — the query a given table maps to is
+# fixed the moment the module loads.
+_TABLE_SELECT_SQL = {
+    name: "SELECT " + ", ".join(f"`{c}`" for c in meta["cols"]) + f" FROM `{name}`"
+    for name, meta in TABLES.items()
+}
+_TABLE_COUNT_SQL = {name: f"SELECT COUNT(*) AS c FROM `{name}`" for name in TABLES}
+
 
 @bp.route("/database")
 @admin_required
@@ -356,12 +370,11 @@ def database():
         active_table = "admin_table"
     cols = TABLES[active_table]["cols"]
 
-    col_list = ", ".join(f"`{c}`" for c in cols)
-    rows = query_all(f"SELECT {col_list} FROM `{active_table}`")  # noqa: S608 — table/cols are whitelisted above, never user input directly
+    rows = query_all(_TABLE_SELECT_SQL[active_table])
 
     counts = {}
     for t in TABLES:
-        row = query_one(f"SELECT COUNT(*) AS c FROM `{t}`")  # noqa: S608 — t comes from the TABLES dict, not request input
+        row = query_one(_TABLE_COUNT_SQL[t])
         counts[t] = row["c"]
 
     return render_template(
