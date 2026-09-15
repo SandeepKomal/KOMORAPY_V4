@@ -36,7 +36,7 @@ jobs:
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: komora_komorapy
+          SONAR_PROJECT_KEY: komorav2_komorav2
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
       - name: Upload PDF report as build artifact
@@ -47,7 +47,7 @@ jobs:
           retention-days: 90
 
       - name: Email PDF report to code owners
-        uses: dawidd6/action-send-mail@v20
+        uses: dawidd6/action-send-mail@v21
         with:
           server_address: smtp.gmail.com
           server_port: 465
