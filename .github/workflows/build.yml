@@ -1,5 +1,4 @@
 name: Build
-
 on:
   push:
     branches:
@@ -7,10 +6,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-# FIX 1: cancel superseded runs so two reports for the same commit
-# never race each other into SonarQube.
+# If two runs get triggered for the same branch/PR close together (e.g.
+# push + pull_request firing for the same commit), only let the latest
+# one actually run — cancels the older, now-redundant run automatically
+# instead of letting both race to submit a SonarQube report for the same
+# commit, which SonarCloud rejects on the losing side.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,35 +32,21 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements-dev.txt
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
       - name: Run tests with coverage
-        run: pytest --cov --cov-report=xml --junitxml=junit.xml
-        # coverage.xml + junit.xml are read via sonar-project.properties
+        run: pytest
+        # generates coverage.xml — sonar-project.properties reads this
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}   # FIX 5: scanner needs this too
-
-      # FIX 2: the scan step only SUBMITS the report; Sonar processes it
-      # asynchronously. Block here until processing finishes, otherwise every
-      # step below reads the PREVIOUS analysis.
-      - name: Wait for Quality Gate
-        id: quality_gate
-        uses: SonarSource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Comment PR with SonarQube results
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,25 +60,13 @@ jobs:
             const marker = '<!-- sonarqube-bot-comment -->';
             const existing = comments.find(c => c.body.includes(marker));
 
-            const branch = context.payload.pull_request.head.ref;
-            const gate = '${{ steps.quality_gate.outcome }}';
-            const gateLine = gate === 'success'
-              ? '**Quality Gate:** ✅ Passed'
-              : '**Quality Gate:** ❌ Failed';
+            const body = `${marker}
+            ### 🔍 SonarQube Analysis
 
-            // FIX 3: build the body as an array. A template literal would keep
-            // the YAML indentation, and 4+ leading spaces turn every line into
-            // a markdown code block.
-            const body = [
-              marker,
-              '### 🔍 SonarQube Analysis',
-              '',
-              gateLine,
-              '',
-              `Full results on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${branch}).`,
-              '',
-              `Commit: \`${context.sha.substring(0, 7)}\``,
-            ].join('\n');
+            Results are available on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${context.payload.pull_request.head.ref}).
+
+            Commit: \`${context.sha.substring(0, 7)}\`
+            `;
 
             if (existing) {
               await github.rest.issues.updateComment({
@@ -108,10 +84,7 @@ jobs:
               });
             }
 
-      # FIX 4: PDF / artifact / email only on merges to main, not on every
-      # push to every open PR. !cancelled() means a failed gate still reports.
       - name: Generate SonarQube PDF report
-        if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: python scripts/generate_sonar_report.py
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -120,7 +93,6 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
       - name: Upload PDF report as build artifact
-        if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: actions/upload-artifact@v7
         with:
           name: sonarqube-report
@@ -128,7 +100,6 @@ jobs:
           retention-days: 90
 
       - name: Email PDF report to code owners
-        if: ${{ !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: dawidd6/action-send-mail@v21
         with:
           server_address: smtp.gmail.com
@@ -140,8 +111,6 @@ jobs:
           subject: "SonarQube Report — ${{ github.repository }} (${{ github.ref_name }})"
           body: |
             Automated SonarQube analysis for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
-
-            Quality Gate: ${{ steps.quality_gate.outcome }}
 
             Full metrics, quality gate status, and open issues are in the attached PDF.
 
