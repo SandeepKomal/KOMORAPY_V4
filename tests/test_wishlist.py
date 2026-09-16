@@ -7,7 +7,9 @@ class TestWishlistView:
         assert resp.status_code == 200  # NOT a 302 — stays on /wishlist
         assert b"Please log in" in resp.data
 
-    def test_logged_in_user_sees_their_items(self, logged_in_customer, mock_db, sample_product):
+    def test_logged_in_user_sees_their_items(
+        self, logged_in_customer, mock_db, sample_product
+    ):
         mock_db["query_all"].return_value = [sample_product]
         resp = logged_in_customer.get("/wishlist")
         assert resp.status_code == 200

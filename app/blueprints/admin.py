@@ -1,13 +1,12 @@
 import functools
-import bcrypt
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash, abort
 
-from ..db import query_one, query_all, execute
-from ..helpers import (
-    csrf_check, is_login_locked_out, record_failed_login, clear_failed_logins,
-    save_upload, get_logged_in_admin_id,
-)
-from flask import current_app
+import bcrypt
+from flask import (Blueprint, abort, current_app, flash, redirect,
+                   render_template, request, session, url_for)
+
+from ..db import execute, query_all, query_one
+from ..helpers import (clear_failed_logins, csrf_check, get_logged_in_admin_id,
+                       is_login_locked_out, record_failed_login, save_upload)
 
 bp = Blueprint("admin", __name__)
 
@@ -18,10 +17,15 @@ PRODUCT_IMAGE_SIZE = (800, 1000)
 
 _NAV_BY_ENDPOINT = {
     "admin.dashboard": "dashboard",
-    "admin.products": "products", "admin.product_edit": "products",
+    "admin.products": "products",
+    "admin.product_edit": "products",
     "admin.product_new": "insert_product",
-    "admin.categories": "categories", "admin.category_new": "categories", "admin.category_edit": "categories",
-    "admin.brands": "brands", "admin.brand_new": "brands", "admin.brand_edit": "brands",
+    "admin.categories": "categories",
+    "admin.category_new": "categories",
+    "admin.category_edit": "categories",
+    "admin.brands": "brands",
+    "admin.brand_new": "brands",
+    "admin.brand_edit": "brands",
     "admin.orders": "orders",
     "admin.payments": "payments",
     "admin.users": "users",
@@ -40,6 +44,7 @@ def admin_required(view):
         if not get_logged_in_admin_id():
             return redirect(url_for("admin.login"))
         return view(*args, **kwargs)
+
     return wrapped
 
 
@@ -53,10 +58,17 @@ def login():
         identifier = "admin:" + username.strip().lower()
 
         if identifier != "admin:" and is_login_locked_out(identifier):
-            flash("Too many failed attempts. Please wait a few minutes and try again.", "error")
+            flash(
+                "Too many failed attempts. Please wait a few minutes and try again.",
+                "error",
+            )
         else:
-            admin = query_one("SELECT * FROM admin_table WHERE admin_username=%s", (username,))
-            if admin and bcrypt.checkpw(password.encode(), admin["admin_password"].encode()):
+            admin = query_one(
+                "SELECT * FROM admin_table WHERE admin_username=%s", (username,)
+            )
+            if admin and bcrypt.checkpw(
+                password.encode(), admin["admin_password"].encode()
+            ):
                 clear_failed_logins(identifier)
                 session.clear()
                 session["admin_id"] = admin["admin_id"]
@@ -142,23 +154,49 @@ def product_new():
         price = request.form.get("price", type=int)
 
         img_dir = current_app.config["PRODUCT_IMAGE_DIR"]
-        image1 = save_upload(request.files.get("image1"), img_dir, target_size=PRODUCT_IMAGE_SIZE)
-        image2 = save_upload(request.files.get("image2"), img_dir, target_size=PRODUCT_IMAGE_SIZE) or ""
-        image3 = save_upload(request.files.get("image3"), img_dir, target_size=PRODUCT_IMAGE_SIZE) or ""
+        image1 = save_upload(
+            request.files.get("image1"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+        )
+        image2 = (
+            save_upload(
+                request.files.get("image2"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+            )
+            or ""
+        )
+        image3 = (
+            save_upload(
+                request.files.get("image3"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+            )
+            or ""
+        )
 
-        if not all([title, description, keywords, category_id, brand_id, price, image1]):
+        if not all(
+            [title, description, keywords, category_id, brand_id, price, image1]
+        ):
             flash("Please fill in all fields and choose a valid main image", "error")
         else:
             execute(
                 "INSERT INTO products (product_title, product_description, product_keywords, "
                 "category_id, brand_id, product_image1, product_image2, product_image3, price, "
                 "date, status) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),'true')",
-                (title, description, keywords, category_id, brand_id, image1, image2, image3, price),
+                (
+                    title,
+                    description,
+                    keywords,
+                    category_id,
+                    brand_id,
+                    image1,
+                    image2,
+                    image3,
+                    price,
+                ),
             )
             flash("Product added")
             return redirect(url_for("admin.products"))
 
-    return render_template("admin/product_form.html", categories=categories, brands=brands, product=None)
+    return render_template(
+        "admin/product_form.html", categories=categories, brands=brands, product=None
+    )
 
 
 @bp.route("/products/<int:product_id>/edit", methods=["GET", "POST"])
@@ -180,20 +218,48 @@ def product_edit(product_id):
         price = request.form.get("price", type=int)
 
         img_dir = current_app.config["PRODUCT_IMAGE_DIR"]
-        image1 = save_upload(request.files.get("image1"), img_dir, target_size=PRODUCT_IMAGE_SIZE) or product["product_image1"]
-        image2 = save_upload(request.files.get("image2"), img_dir, target_size=PRODUCT_IMAGE_SIZE) or product["product_image2"]
-        image3 = save_upload(request.files.get("image3"), img_dir, target_size=PRODUCT_IMAGE_SIZE) or product["product_image3"]
+        image1 = (
+            save_upload(
+                request.files.get("image1"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+            )
+            or product["product_image1"]
+        )
+        image2 = (
+            save_upload(
+                request.files.get("image2"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+            )
+            or product["product_image2"]
+        )
+        image3 = (
+            save_upload(
+                request.files.get("image3"), img_dir, target_size=PRODUCT_IMAGE_SIZE
+            )
+            or product["product_image3"]
+        )
 
         execute(
             "UPDATE products SET product_title=%s, product_description=%s, product_keywords=%s, "
             "category_id=%s, brand_id=%s, product_image1=%s, product_image2=%s, product_image3=%s, "
             "price=%s, date=NOW() WHERE product_id=%s",
-            (title, description, keywords, category_id, brand_id, image1, image2, image3, price, product_id),
+            (
+                title,
+                description,
+                keywords,
+                category_id,
+                brand_id,
+                image1,
+                image2,
+                image3,
+                price,
+                product_id,
+            ),
         )
         flash("Product updated")
         return redirect(url_for("admin.products"))
 
-    return render_template("admin/product_form.html", categories=categories, brands=brands, product=product)
+    return render_template(
+        "admin/product_form.html", categories=categories, brands=brands, product=product
+    )
 
 
 @bp.route("/products/<int:product_id>/delete", methods=["POST"])
@@ -219,7 +285,9 @@ def category_new():
     if request.method == "POST":
         csrf_check()
         title = request.form["title"].strip()
-        existing = query_one("SELECT 1 FROM categories WHERE category_title=%s", (title,))
+        existing = query_one(
+            "SELECT 1 FROM categories WHERE category_title=%s", (title,)
+        )
         if existing:
             flash("This category already exists", "error")
         else:
@@ -232,13 +300,18 @@ def category_new():
 @bp.route("/categories/<int:category_id>/edit", methods=["GET", "POST"])
 @admin_required
 def category_edit(category_id):
-    category = query_one("SELECT * FROM categories WHERE category_id=%s", (category_id,))
+    category = query_one(
+        "SELECT * FROM categories WHERE category_id=%s", (category_id,)
+    )
     if not category:
         abort(404)
     if request.method == "POST":
         csrf_check()
         title = request.form["title"].strip()
-        execute("UPDATE categories SET category_title=%s WHERE category_id=%s", (title, category_id))
+        execute(
+            "UPDATE categories SET category_title=%s WHERE category_id=%s",
+            (title, category_id),
+        )
         flash("Category updated")
         return redirect(url_for("admin.categories"))
     return render_template("admin/category_form.html", category=category)
@@ -334,17 +407,82 @@ def users():
 
 # ---------- DB browser (read-only, passwords always excluded) ----------
 TABLES = {
-    "admin_table": {"label": "Admins", "cols": ["admin_id", "admin_username", "admin_email"]},
-    "user_table": {"label": "Users", "cols": ["user_id", "username", "user_email", "user_address", "user_mobile", "user_ip"]},
-    "products": {"label": "Products", "cols": ["product_id", "product_title", "category_id", "brand_id", "price", "status", "date"]},
+    "admin_table": {
+        "label": "Admins",
+        "cols": ["admin_id", "admin_username", "admin_email"],
+    },
+    "user_table": {
+        "label": "Users",
+        "cols": [
+            "user_id",
+            "username",
+            "user_email",
+            "user_address",
+            "user_mobile",
+            "user_ip",
+        ],
+    },
+    "products": {
+        "label": "Products",
+        "cols": [
+            "product_id",
+            "product_title",
+            "category_id",
+            "brand_id",
+            "price",
+            "status",
+            "date",
+        ],
+    },
     "categories": {"label": "Categories", "cols": ["category_id", "category_title"]},
     "brands": {"label": "Brands", "cols": ["brand_id", "brand_title"]},
-    "cart_details": {"label": "Cart items", "cols": ["product_id", "ip_address", "quantity"]},
-    "user_orders": {"label": "Orders", "cols": ["order_id", "user_id", "product_id", "amount_due", "invoice_number", "total_products", "order_date", "order_status"]},
-    "user_payments": {"label": "Payments", "cols": ["payment_id", "order_id", "invoice_number", "amount", "payment_mode", "date"]},
-    "orders_pending": {"label": "Orders pending", "cols": ["id", "user_id", "invoice_number", "product_id", "quantity", "order_status"]},
-    "wishlist_details": {"label": "Wishlist", "cols": ["wishlist_id", "user_id", "product_id", "date_added"]},
-    "login_attempts": {"label": "Login attempts", "cols": ["id", "identifier", "attempted_at"]},
+    "cart_details": {
+        "label": "Cart items",
+        "cols": ["product_id", "ip_address", "quantity"],
+    },
+    "user_orders": {
+        "label": "Orders",
+        "cols": [
+            "order_id",
+            "user_id",
+            "product_id",
+            "amount_due",
+            "invoice_number",
+            "total_products",
+            "order_date",
+            "order_status",
+        ],
+    },
+    "user_payments": {
+        "label": "Payments",
+        "cols": [
+            "payment_id",
+            "order_id",
+            "invoice_number",
+            "amount",
+            "payment_mode",
+            "date",
+        ],
+    },
+    "orders_pending": {
+        "label": "Orders pending",
+        "cols": [
+            "id",
+            "user_id",
+            "invoice_number",
+            "product_id",
+            "quantity",
+            "order_status",
+        ],
+    },
+    "wishlist_details": {
+        "label": "Wishlist",
+        "cols": ["wishlist_id", "user_id", "product_id", "date_added"],
+    },
+    "login_attempts": {
+        "label": "Login attempts",
+        "cols": ["id", "identifier", "attempted_at"],
+    },
 }
 
 # The actual SELECT strings are pre-built ONCE, here, at import time — from
@@ -379,5 +517,9 @@ def database():
 
     return render_template(
         "admin/database.html",
-        tables=TABLES, active_table=active_table, cols=cols, rows=rows, counts=counts,
+        tables=TABLES,
+        active_table=active_table,
+        cols=cols,
+        rows=rows,
+        counts=counts,
     )

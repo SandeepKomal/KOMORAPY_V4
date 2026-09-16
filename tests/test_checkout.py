@@ -1,12 +1,18 @@
 from decimal import Decimal
+
 from .conftest import get_csrf_token
 
 
 def _one_cart_line_and_product(mock_db, price=Decimal("500.00"), quantity=2):
     """Wires up mock_db so _cart_line_items() resolves to exactly one item."""
-    mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": quantity}]
+    mock_db["query_all"].return_value = [
+        {"product_id": 1, "ip_address": "127.0.0.1", "quantity": quantity}
+    ]
     mock_db["query_one"].return_value = {
-        "product_id": 1, "product_title": "Test Product", "product_image1": "x.jpg", "price": price,
+        "product_id": 1,
+        "product_title": "Test Product",
+        "product_image1": "x.jpg",
+        "price": price,
     }
 
 
@@ -23,18 +29,29 @@ class TestAddressStep:
         assert resp.headers["Location"].endswith("/cart")
 
     def test_shows_saved_address_when_present(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
+        mock_db["query_all"].return_value = [
+            {"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}
+        ]
         # side_effect: 1) product lookup for the cart line  2) user's saved address
         mock_db["query_one"].side_effect = [
-            {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")},
+            {
+                "product_id": 1,
+                "product_title": "T",
+                "product_image1": "x.jpg",
+                "price": Decimal("100"),
+            },
             {"user_address": "123 Saved St", "user_mobile": "9999999999"},
         ]
         resp = logged_in_customer.get("/checkout/address")
         assert resp.status_code == 200
         assert b"123 Saved St" in resp.data
 
-    def test_submitting_new_address_advances_to_payment(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
+    def test_submitting_new_address_advances_to_payment(
+        self, logged_in_customer, mock_db
+    ):
+        mock_db["query_all"].return_value = [
+            {"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}
+        ]
 
         # This route gets hit twice — once by get_csrf_token()'s GET, once
         # by the actual POST — so a fixed-position side_effect list breaks
@@ -43,37 +60,63 @@ class TestAddressStep:
         # the view runs.
         def query_one_router(sql, params=()):
             if "FROM products" in sql:
-                return {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")}
+                return {
+                    "product_id": 1,
+                    "product_title": "T",
+                    "product_image1": "x.jpg",
+                    "price": Decimal("100"),
+                }
             if "user_address" in sql:
                 return {"user_address": "", "user_mobile": ""}
             return None
+
         mock_db["query_one"].side_effect = query_one_router
 
         token = get_csrf_token(logged_in_customer, "/checkout/address")
-        resp = logged_in_customer.post("/checkout/address", data={
-            "address_choice": "new", "address": "42 New Ave", "mobile": "8888888888",
-            "csrf_token": token,
-        }, follow_redirects=False)
+        resp = logged_in_customer.post(
+            "/checkout/address",
+            data={
+                "address_choice": "new",
+                "address": "42 New Ave",
+                "mobile": "8888888888",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/checkout/payment")
         with logged_in_customer.session_transaction() as sess:
             assert sess["checkout_address"] == "42 New Ave"
 
     def test_missing_address_shows_error(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = [{"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}]
+        mock_db["query_all"].return_value = [
+            {"product_id": 1, "ip_address": "127.0.0.1", "quantity": 1}
+        ]
 
         def query_one_router(sql, params=()):
             if "FROM products" in sql:
-                return {"product_id": 1, "product_title": "T", "product_image1": "x.jpg", "price": Decimal("100")}
+                return {
+                    "product_id": 1,
+                    "product_title": "T",
+                    "product_image1": "x.jpg",
+                    "price": Decimal("100"),
+                }
             if "user_address" in sql:
                 return {"user_address": "", "user_mobile": ""}
             return None
+
         mock_db["query_one"].side_effect = query_one_router
 
         token = get_csrf_token(logged_in_customer, "/checkout/address")
-        resp = logged_in_customer.post("/checkout/address", data={
-            "address_choice": "new", "address": "", "mobile": "", "csrf_token": token,
-        })
+        resp = logged_in_customer.post(
+            "/checkout/address",
+            data={
+                "address_choice": "new",
+                "address": "",
+                "mobile": "",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"Please fill in both fields" in resp.data
 
@@ -83,7 +126,9 @@ class TestPaymentStep:
         resp = client.get("/checkout/payment", follow_redirects=False)
         assert resp.status_code == 302
 
-    def test_redirects_to_address_if_no_address_chosen_yet(self, logged_in_customer, mock_db):
+    def test_redirects_to_address_if_no_address_chosen_yet(
+        self, logged_in_customer, mock_db
+    ):
         resp = logged_in_customer.get("/checkout/payment", follow_redirects=False)
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/checkout/address")
@@ -97,7 +142,9 @@ class TestPaymentStep:
         assert resp.status_code == 200
         assert b"1,500" in resp.data  # 500 * 3
 
-    def test_placing_order_creates_one_row_set_per_item_and_empties_cart(self, logged_in_customer, mock_db):
+    def test_placing_order_creates_one_row_set_per_item_and_empties_cart(
+        self, logged_in_customer, mock_db
+    ):
         with logged_in_customer.session_transaction() as sess:
             sess["checkout_address"] = "1 Main St"
             sess["checkout_mobile"] = "9999999999"
@@ -105,9 +152,14 @@ class TestPaymentStep:
         mock_db["execute"].return_value = (1, 55)  # (rowcount, new order_id)
 
         token = get_csrf_token(logged_in_customer, "/checkout/payment")
-        resp = logged_in_customer.post("/checkout/payment", data={
-            "payment_mode": "UPI", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = logged_in_customer.post(
+            "/checkout/payment",
+            data={
+                "payment_mode": "UPI",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
 
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/orders")
@@ -122,9 +174,13 @@ class TestPaymentStep:
             sess["checkout_address"] = "1 Main St"
         _one_cart_line_and_product(mock_db)
         token = get_csrf_token(logged_in_customer, "/checkout/payment")
-        resp = logged_in_customer.post("/checkout/payment", data={
-            "payment_mode": "", "csrf_token": token,
-        })
+        resp = logged_in_customer.post(
+            "/checkout/payment",
+            data={
+                "payment_mode": "",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"Please select a payment mode" in resp.data
 
@@ -135,11 +191,18 @@ class TestOrdersList:
         assert resp.status_code == 302
 
     def test_shows_orders_for_logged_in_user(self, logged_in_customer, mock_db):
-        mock_db["query_all"].return_value = [{
-            "order_id": 1, "amount_due": Decimal("500.00"), "invoice_number": 12345,
-            "total_products": 1, "order_date": "2026-01-01", "order_status": "Complete",
-            "product_title": "Test Product", "product_image1": "x.jpg",
-        }]
+        mock_db["query_all"].return_value = [
+            {
+                "order_id": 1,
+                "amount_due": Decimal("500.00"),
+                "invoice_number": 12345,
+                "total_products": 1,
+                "order_date": "2026-01-01",
+                "order_status": "Complete",
+                "product_title": "Test Product",
+                "product_image1": "x.jpg",
+            }
+        ]
         resp = logged_in_customer.get("/orders")
         assert resp.status_code == 200
         assert b"12345" in resp.data

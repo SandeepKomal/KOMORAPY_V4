@@ -1,11 +1,11 @@
 import bcrypt
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 
-from ..db import query_one, query_all, execute
-from ..helpers import (
-    csrf_check, get_ip, is_login_locked_out, record_failed_login, clear_failed_logins,
-    get_logged_in_user_id,
-)
+from ..db import execute, query_all, query_one
+from ..helpers import (clear_failed_logins, csrf_check, get_ip,
+                       get_logged_in_user_id, is_login_locked_out,
+                       record_failed_login)
 
 bp = Blueprint("auth", __name__)
 
@@ -13,7 +13,9 @@ bp = Blueprint("auth", __name__)
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     redirect_wishlist = request.values.get("redirect_wishlist", type=int)
-    next_dest = request.values.get("next")  # "cart" or "wishlist" — where to land after login
+    next_dest = request.values.get(
+        "next"
+    )  # "cart" or "wishlist" — where to land after login
 
     if request.method == "POST":
         csrf_check()
@@ -22,10 +24,15 @@ def login():
         identifier = username.strip().lower()
 
         if identifier and is_login_locked_out(identifier):
-            flash("Too many failed attempts. Please wait a few minutes and try again.", "error")
+            flash(
+                "Too many failed attempts. Please wait a few minutes and try again.",
+                "error",
+            )
         else:
             user = query_one("SELECT * FROM user_table WHERE username=%s", (username,))
-            if user and bcrypt.checkpw(password.encode(), user["user_password"].encode()):
+            if user and bcrypt.checkpw(
+                password.encode(), user["user_password"].encode()
+            ):
                 clear_failed_logins(identifier)
                 session.clear()
                 session["user_id"] = user["user_id"]
@@ -106,7 +113,9 @@ def register():
                     (new_user_id, redirect_wishlist),
                 )
                 flash("Account created and saved to your wishlist — log in to see it")
-                return redirect(url_for("auth.login", redirect_wishlist=redirect_wishlist))
+                return redirect(
+                    url_for("auth.login", redirect_wishlist=redirect_wishlist)
+                )
 
             flash("Account created — log in to continue")
             return redirect(url_for("auth.login"))
@@ -152,7 +161,13 @@ def profile_edit():
                 flash("An account with that email already exists", "error")
             else:
                 flash("An account with that phone number already exists", "error")
-            user = dict(user, username=username, user_email=email, user_address=address, user_mobile=mobile)
+            user = dict(
+                user,
+                username=username,
+                user_email=email,
+                user_address=address,
+                user_mobile=mobile,
+            )
         else:
             execute(
                 "UPDATE user_table SET username=%s, user_email=%s, user_address=%s, user_mobile=%s WHERE user_id=%s",

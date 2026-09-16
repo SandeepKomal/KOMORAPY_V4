@@ -1,4 +1,5 @@
 import bcrypt
+
 from .conftest import get_csrf_token
 
 
@@ -22,9 +23,15 @@ class TestLogin:
         mock_db["query_one"].side_effect = [{"c": 0}, sample_customer, None]
 
         token = get_csrf_token(client, "/login")
-        resp = client.post("/login", data={
-            "username": "testuser", "password": "correct-password", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "correct-password",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
 
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/")
@@ -32,24 +39,43 @@ class TestLogin:
             assert sess["user_id"] == 1
             assert sess["username"] == "testuser"
 
-    def test_successful_login_with_pending_cart_goes_to_checkout(self, client, mock_db, sample_customer):
+    def test_successful_login_with_pending_cart_goes_to_checkout(
+        self, client, mock_db, sample_customer
+    ):
         sample_customer["user_password"] = _hash("correct-password")
-        mock_db["query_one"].side_effect = [{"c": 0}, sample_customer, {"1": 1}]  # has_cart_items truthy
+        mock_db["query_one"].side_effect = [
+            {"c": 0},
+            sample_customer,
+            {"1": 1},
+        ]  # has_cart_items truthy
 
         token = get_csrf_token(client, "/login")
-        resp = client.post("/login", data={
-            "username": "testuser", "password": "correct-password", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "correct-password",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert "/checkout/payment" in resp.headers["Location"]
 
-    def test_wrong_password_shows_error_and_records_failed_attempt(self, client, mock_db, sample_customer):
+    def test_wrong_password_shows_error_and_records_failed_attempt(
+        self, client, mock_db, sample_customer
+    ):
         sample_customer["user_password"] = _hash("correct-password")
         mock_db["query_one"].side_effect = [{"c": 0}, sample_customer]
 
         token = get_csrf_token(client, "/login")
-        resp = client.post("/login", data={
-            "username": "testuser", "password": "wrong-password", "csrf_token": token,
-        })
+        resp = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "wrong-password",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"Invalid username or password" in resp.data
         assert mock_db["execute"].called  # record_failed_login() ran
@@ -57,33 +83,53 @@ class TestLogin:
     def test_nonexistent_username_shows_generic_error(self, client, mock_db):
         mock_db["query_one"].side_effect = [{"c": 0}, None]
         token = get_csrf_token(client, "/login")
-        resp = client.post("/login", data={
-            "username": "nosuchuser", "password": "whatever", "csrf_token": token,
-        })
+        resp = client.post(
+            "/login",
+            data={
+                "username": "nosuchuser",
+                "password": "whatever",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"Invalid username or password" in resp.data
 
-    def test_locked_out_identifier_blocks_login_attempt(self, client, mock_db, sample_customer):
+    def test_locked_out_identifier_blocks_login_attempt(
+        self, client, mock_db, sample_customer
+    ):
         sample_customer["user_password"] = _hash("correct-password")
         # lockout count >= LOGIN_ATTEMPT_LIMIT (5) — should short-circuit
         # before ever looking up the user, even with the right password.
         mock_db["query_one"].side_effect = [{"c": 5}]
 
         token = get_csrf_token(client, "/login")
-        resp = client.post("/login", data={
-            "username": "testuser", "password": "correct-password", "csrf_token": token,
-        })
+        resp = client.post(
+            "/login",
+            data={
+                "username": "testuser",
+                "password": "correct-password",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"Too many failed attempts" in resp.data
 
-    def test_login_with_redirect_wishlist_saves_item_and_redirects_there(self, client, mock_db, sample_customer):
+    def test_login_with_redirect_wishlist_saves_item_and_redirects_there(
+        self, client, mock_db, sample_customer
+    ):
         sample_customer["user_password"] = _hash("correct-password")
         mock_db["query_one"].side_effect = [{"c": 0}, sample_customer]
 
         token = get_csrf_token(client, "/login?redirect_wishlist=42")
-        resp = client.post("/login?redirect_wishlist=42", data={
-            "username": "testuser", "password": "correct-password", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/login?redirect_wishlist=42",
+            data={
+                "username": "testuser",
+                "password": "correct-password",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert "/wishlist" in resp.headers["Location"]
         # INSERT IGNORE INTO wishlist_details ran with the right product id
         insert_call = mock_db["execute"].call_args
@@ -97,51 +143,76 @@ class TestRegister:
 
     def test_successful_registration_redirects_to_login(self, client, mock_db):
         mock_db["query_one"].return_value = None  # no existing duplicate
-        mock_db["execute"].return_value = (1, 7)   # new user_id = 7
+        mock_db["execute"].return_value = (1, 7)  # new user_id = 7
 
         token = get_csrf_token(client, "/register")
-        resp = client.post("/register", data={
-            "username": "newuser", "email": "new@example.com",
-            "password": "longenoughpw", "confirm_password": "longenoughpw",
-            "address": "1 Main St", "mobile": "9999999999",
-            "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/register",
+            data={
+                "username": "newuser",
+                "email": "new@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "longenoughpw",
+                "address": "1 Main St",
+                "mobile": "9999999999",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/login")
 
     def test_duplicate_username_is_rejected(self, client, mock_db, sample_customer):
         mock_db["query_one"].return_value = sample_customer  # username collides
         token = get_csrf_token(client, "/register")
-        resp = client.post("/register", data={
-            "username": "testuser", "email": "new@example.com",
-            "password": "longenoughpw", "confirm_password": "longenoughpw",
-            "address": "1 Main St", "mobile": "1111111111",
-            "csrf_token": token,
-        })
+        resp = client.post(
+            "/register",
+            data={
+                "username": "testuser",
+                "email": "new@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "longenoughpw",
+                "address": "1 Main St",
+                "mobile": "1111111111",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"already taken" in resp.data
 
     def test_short_password_is_rejected(self, client, mock_db):
         mock_db["query_one"].return_value = None
         token = get_csrf_token(client, "/register")
-        resp = client.post("/register", data={
-            "username": "newuser", "email": "new@example.com",
-            "password": "short", "confirm_password": "short",
-            "address": "1 Main St", "mobile": "9999999999",
-            "csrf_token": token,
-        })
+        resp = client.post(
+            "/register",
+            data={
+                "username": "newuser",
+                "email": "new@example.com",
+                "password": "short",
+                "confirm_password": "short",
+                "address": "1 Main St",
+                "mobile": "9999999999",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"at least 8 characters" in resp.data
 
     def test_mismatched_passwords_are_rejected(self, client, mock_db):
         mock_db["query_one"].return_value = None
         token = get_csrf_token(client, "/register")
-        resp = client.post("/register", data={
-            "username": "newuser", "email": "new@example.com",
-            "password": "longenoughpw", "confirm_password": "differentpw",
-            "address": "1 Main St", "mobile": "9999999999",
-            "csrf_token": token,
-        })
+        resp = client.post(
+            "/register",
+            data={
+                "username": "newuser",
+                "email": "new@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "differentpw",
+                "address": "1 Main St",
+                "mobile": "9999999999",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"don&#39;t match" in resp.data or b"don't match" in resp.data
 
@@ -150,12 +221,19 @@ class TestRegister:
         mock_db["execute"].return_value = (1, 9)
 
         token = get_csrf_token(client, "/register?redirect_wishlist=5")
-        resp = client.post("/register?redirect_wishlist=5", data={
-            "username": "newuser", "email": "new@example.com",
-            "password": "longenoughpw", "confirm_password": "longenoughpw",
-            "address": "1 Main St", "mobile": "9999999999",
-            "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/register?redirect_wishlist=5",
+            data={
+                "username": "newuser",
+                "email": "new@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "longenoughpw",
+                "address": "1 Main St",
+                "mobile": "9999999999",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert "redirect_wishlist=5" in resp.headers["Location"]
 
 
@@ -173,7 +251,9 @@ class TestProfileEdit:
         assert resp.status_code == 302
         assert "/login" in resp.headers["Location"]
 
-    def test_loads_for_logged_in_user(self, logged_in_customer, mock_db, sample_customer):
+    def test_loads_for_logged_in_user(
+        self, logged_in_customer, mock_db, sample_customer
+    ):
         mock_db["query_one"].return_value = sample_customer
         resp = logged_in_customer.get("/profile/edit")
         assert resp.status_code == 200
@@ -186,22 +266,41 @@ class TestProfileEdit:
         # the full view function, so it consumes side_effect entries too.
         mock_db["query_one"].side_effect = [sample_customer, sample_customer, None]
         token = get_csrf_token(logged_in_customer, "/profile/edit")
-        resp = logged_in_customer.post("/profile/edit", data={
-            "username": "testuser", "email": "updated@example.com",
-            "address": "New address", "mobile": "8888888888",
-            "csrf_token": token,
-        }, follow_redirects=False)
+        resp = logged_in_customer.post(
+            "/profile/edit",
+            data={
+                "username": "testuser",
+                "email": "updated@example.com",
+                "address": "New address",
+                "mobile": "8888888888",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
 
-    def test_duplicate_email_rejected(self, logged_in_customer, mock_db, sample_customer):
-        other_user = dict(sample_customer, user_id=2, username="other", user_email="taken@example.com")
-        mock_db["query_one"].side_effect = [sample_customer, sample_customer, other_user]
+    def test_duplicate_email_rejected(
+        self, logged_in_customer, mock_db, sample_customer
+    ):
+        other_user = dict(
+            sample_customer, user_id=2, username="other", user_email="taken@example.com"
+        )
+        mock_db["query_one"].side_effect = [
+            sample_customer,
+            sample_customer,
+            other_user,
+        ]
         token = get_csrf_token(logged_in_customer, "/profile/edit")
-        resp = logged_in_customer.post("/profile/edit", data={
-            "username": "testuser", "email": "taken@example.com",
-            "address": "New address", "mobile": "8888888888",
-            "csrf_token": token,
-        })
+        resp = logged_in_customer.post(
+            "/profile/edit",
+            data={
+                "username": "testuser",
+                "email": "taken@example.com",
+                "address": "New address",
+                "mobile": "8888888888",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"already exists" in resp.data
 

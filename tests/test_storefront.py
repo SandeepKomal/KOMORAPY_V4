@@ -19,20 +19,26 @@ class TestIndex:
         resp = client.get("/")
         assert b"v-badge-tag" in resp.data or b"v-badge-low" in resp.data
 
-    def test_homepage_low_stock_badge_for_product_id_divisible_by_4(self, client, mock_db, sample_product):
+    def test_homepage_low_stock_badge_for_product_id_divisible_by_4(
+        self, client, mock_db, sample_product
+    ):
         sample_product["product_id"] = 4
         mock_db["query_all"].return_value = [sample_product]
         resp = client.get("/")
         assert b"Low stock" in resp.data
 
-    def test_homepage_hover_swap_image_when_image2_present(self, client, mock_db, sample_product):
+    def test_homepage_hover_swap_image_when_image2_present(
+        self, client, mock_db, sample_product
+    ):
         sample_product["product_image2"] = "hover.jpg"
         mock_db["query_all"].return_value = [sample_product]
         resp = client.get("/")
         assert b"v-img-hover" in resp.data
         assert b"hover.jpg" in resp.data
 
-    def test_homepage_no_hover_image_when_image2_absent(self, client, mock_db, sample_product):
+    def test_homepage_no_hover_image_when_image2_absent(
+        self, client, mock_db, sample_product
+    ):
         sample_product["product_image2"] = ""
         mock_db["query_all"].return_value = [sample_product]
         resp = client.get("/")

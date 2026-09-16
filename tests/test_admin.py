@@ -1,5 +1,7 @@
-import bcrypt
 from decimal import Decimal
+
+import bcrypt
+
 from .conftest import get_csrf_token
 
 
@@ -12,29 +14,46 @@ class TestAdminAuth:
         resp = client.get("/admin/login")
         assert resp.status_code == 200
 
-    def test_successful_login_uses_separate_session_key_from_customers(self, client, mock_db, sample_admin):
+    def test_successful_login_uses_separate_session_key_from_customers(
+        self, client, mock_db, sample_admin
+    ):
         sample_admin["admin_password"] = _hash("adminpass")
         mock_db["query_one"].side_effect = [{"c": 0}, sample_admin]
 
         token = get_csrf_token(client, "/admin/login")
-        resp = client.post("/admin/login", data={
-            "username": "testadmin", "password": "adminpass", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/admin/login",
+            data={
+                "username": "testadmin",
+                "password": "adminpass",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         with client.session_transaction() as sess:
             assert sess["admin_id"] == 1
-            assert "user_id" not in sess  # must never collide with the customer session key
+            assert (
+                "user_id" not in sess
+            )  # must never collide with the customer session key
 
-    def test_admin_rate_limited_independently_of_customer_login(self, client, mock_db, sample_admin):
+    def test_admin_rate_limited_independently_of_customer_login(
+        self, client, mock_db, sample_admin
+    ):
         """Regression test for the privilege-separation fix: admin lockouts
         must be tracked under an 'admin:' prefixed identifier, distinct
         from a customer with the same username."""
         sample_admin["admin_password"] = _hash("adminpass")
         mock_db["query_one"].side_effect = [{"c": 5}]  # locked out
         token = get_csrf_token(client, "/admin/login")
-        resp = client.post("/admin/login", data={
-            "username": "testadmin", "password": "adminpass", "csrf_token": token,
-        })
+        resp = client.post(
+            "/admin/login",
+            data={
+                "username": "testadmin",
+                "password": "adminpass",
+                "csrf_token": token,
+            },
+        )
         assert b"Too many failed attempts" in resp.data
         # confirm the identifier passed to the lockout check is prefixed
         lockout_call = mock_db["query_one"].call_args_list[0]
@@ -51,7 +70,9 @@ class TestAdminAuth:
         assert resp.status_code == 302
         assert "/admin/login" in resp.headers["Location"]
 
-    def test_customer_session_alone_cannot_reach_admin_dashboard(self, logged_in_customer):
+    def test_customer_session_alone_cannot_reach_admin_dashboard(
+        self, logged_in_customer
+    ):
         """Critical regression test for the privilege-escalation bug fixed
         earlier: a logged-in customer must NOT be able to access the admin
         panel just because *some* session exists."""
@@ -68,22 +89,33 @@ class TestAdminRegister:
     def test_successful_registration(self, client, mock_db):
         mock_db["query_one"].return_value = None
         token = get_csrf_token(client, "/admin/register")
-        resp = client.post("/admin/register", data={
-            "username": "newadmin", "email": "newadmin@example.com",
-            "password": "longenoughpw", "confirm_password": "longenoughpw",
-            "csrf_token": token,
-        }, follow_redirects=False)
+        resp = client.post(
+            "/admin/register",
+            data={
+                "username": "newadmin",
+                "email": "newadmin@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "longenoughpw",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         assert resp.headers["Location"].endswith("/admin/login")
 
     def test_duplicate_admin_rejected(self, client, mock_db, sample_admin):
         mock_db["query_one"].return_value = sample_admin
         token = get_csrf_token(client, "/admin/register")
-        resp = client.post("/admin/register", data={
-            "username": "testadmin", "email": "x@example.com",
-            "password": "longenoughpw", "confirm_password": "longenoughpw",
-            "csrf_token": token,
-        })
+        resp = client.post(
+            "/admin/register",
+            data={
+                "username": "testadmin",
+                "email": "x@example.com",
+                "password": "longenoughpw",
+                "confirm_password": "longenoughpw",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"already exists" in resp.data
 
@@ -114,14 +146,20 @@ class TestProductCRUD:
         # new-product form sidesteps needing to seed fake product rows
         # just to get a token)
         token = get_csrf_token(logged_in_admin, "/admin/products/new")
-        resp = logged_in_admin.post("/admin/products/1/delete", data={"csrf_token": token}, follow_redirects=False)
+        resp = logged_in_admin.post(
+            "/admin/products/1/delete",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         assert mock_db["execute"].called
 
 
 class TestCategoryCRUD:
     def test_list_loads(self, logged_in_admin, mock_db):
-        mock_db["query_all"].return_value = [{"category_id": 1, "category_title": "Shoes"}]
+        mock_db["query_all"].return_value = [
+            {"category_id": 1, "category_title": "Shoes"}
+        ]
         resp = logged_in_admin.get("/admin/categories")
         assert resp.status_code == 200
         assert b"Shoes" in resp.data
@@ -129,18 +167,27 @@ class TestCategoryCRUD:
     def test_insert_rejects_duplicate(self, logged_in_admin, mock_db):
         mock_db["query_one"].return_value = {"category_id": 1}  # already exists
         token = get_csrf_token(logged_in_admin, "/admin/categories/new")
-        resp = logged_in_admin.post("/admin/categories/new", data={
-            "title": "Shoes", "csrf_token": token,
-        })
+        resp = logged_in_admin.post(
+            "/admin/categories/new",
+            data={
+                "title": "Shoes",
+                "csrf_token": token,
+            },
+        )
         assert resp.status_code == 200
         assert b"already exists" in resp.data
 
     def test_insert_succeeds_when_new(self, logged_in_admin, mock_db):
         mock_db["query_one"].return_value = None
         token = get_csrf_token(logged_in_admin, "/admin/categories/new")
-        resp = logged_in_admin.post("/admin/categories/new", data={
-            "title": "New Category", "csrf_token": token,
-        }, follow_redirects=False)
+        resp = logged_in_admin.post(
+            "/admin/categories/new",
+            data={
+                "title": "New Category",
+                "csrf_token": token,
+            },
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
 
 
@@ -158,10 +205,16 @@ class TestOrdersPaymentsUsers:
         assert resp.status_code == 302
 
     def test_orders_list_loads(self, logged_in_admin, mock_db):
-        mock_db["query_all"].return_value = [{
-            "order_id": 1, "amount_due": Decimal("500"), "invoice_number": 111,
-            "total_products": 1, "order_date": "2026-01-01", "order_status": "Complete",
-        }]
+        mock_db["query_all"].return_value = [
+            {
+                "order_id": 1,
+                "amount_due": Decimal("500"),
+                "invoice_number": 111,
+                "total_products": 1,
+                "order_date": "2026-01-01",
+                "order_status": "Complete",
+            }
+        ]
         resp = logged_in_admin.get("/admin/orders")
         assert resp.status_code == 200
 
@@ -206,7 +259,9 @@ class TestDatabaseBrowser:
         after the view function's own logic has already run."""
         mock_db["query_all"].return_value = []
         mock_db["query_one"].return_value = {"c": 0}
-        resp = logged_in_admin.get("/admin/database?table=products; DROP TABLE users;--")
+        resp = logged_in_admin.get(
+            "/admin/database?table=products; DROP TABLE users;--"
+        )
         assert resp.status_code == 200
         all_sql = [call.args[0] for call in mock_db["query_all"].call_args_list]
         db_browser_calls = [sql for sql in all_sql if "FROM `" in sql]

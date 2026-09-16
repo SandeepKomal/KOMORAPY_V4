@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from ..db import query_one, query_all, execute
-from ..helpers import get_logged_in_user_id, get_ip, add_to_cart, safe_redirect_target
+from ..db import execute, query_all, query_one
+from ..helpers import (add_to_cart, get_ip, get_logged_in_user_id,
+                       safe_redirect_target)
 
 bp = Blueprint("wishlist", __name__)
 
@@ -53,7 +54,8 @@ def move_to_bag(product_id):
 
     ip = get_ip()
     already_in_cart = query_one(
-        "SELECT 1 FROM cart_details WHERE ip_address=%s AND product_id=%s", (ip, product_id)
+        "SELECT 1 FROM cart_details WHERE ip_address=%s AND product_id=%s",
+        (ip, product_id),
     )
     if not already_in_cart:
         add_to_cart(product_id)

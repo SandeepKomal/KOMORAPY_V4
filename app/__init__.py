@@ -1,13 +1,13 @@
+import logging
 import os
 import sys
-import logging
+
 from flask import Flask, render_template, send_from_directory, session
 
 from . import db
-from .helpers import (
-    csrf_token, get_categories, get_brands, get_cart_rows,
-    get_logged_in_user_id, get_wishlist_ids, product_image_path, user_image_path,
-)
+from .helpers import (csrf_token, get_brands, get_cart_rows, get_categories,
+                      get_logged_in_user_id, get_wishlist_ids,
+                      product_image_path, user_image_path)
 
 
 def create_app():
@@ -34,9 +34,9 @@ def create_app():
     # not relying on Python's default "last resort" logging behavior.
     if not app.logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter(
-            "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
-        ))
+        handler.setFormatter(
+            logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+        )
         app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
 
@@ -63,12 +63,14 @@ def create_app():
     # normally between deploys (only changes when the file's content does).
     def _asset_version():
         import os as _os
+
         css_path = os.path.join(app.static_folder, "css", "komora.css")
         js_path = os.path.join(app.static_folder, "js", "komora.js")
         try:
             return int(max(_os.path.getmtime(css_path), _os.path.getmtime(js_path)))
         except OSError:
             return 1
+
     asset_version = _asset_version()
 
     upload_root = os.environ.get("UPLOAD_ROOT", "/data/uploads")
@@ -118,7 +120,12 @@ def create_app():
     # ---------- error pages (no stack traces shown to visitors) ----------
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template("error.html", code=403, message=str(e.description or "Forbidden")), 403
+        return (
+            render_template(
+                "error.html", code=403, message=str(e.description or "Forbidden")
+            ),
+            403,
+        )
 
     @app.errorhandler(404)
     def not_found(e):
@@ -127,16 +134,24 @@ def create_app():
     @app.errorhandler(500)
     def server_error(e):
         from flask import request as _req
+
         app.logger.exception("Unhandled server error on %s %s", _req.method, _req.path)
-        return render_template("error.html", code=500, message="Something went wrong. Please try again later."), 500
+        return (
+            render_template(
+                "error.html",
+                code=500,
+                message="Something went wrong. Please try again later.",
+            ),
+            500,
+        )
 
     # ---------- blueprints ----------
-    from .blueprints.storefront import bp as storefront_bp
-    from .blueprints.cart import bp as cart_bp
-    from .blueprints.wishlist import bp as wishlist_bp
-    from .blueprints.auth import bp as auth_bp
-    from .blueprints.checkout import bp as checkout_bp
     from .blueprints.admin import bp as admin_bp
+    from .blueprints.auth import bp as auth_bp
+    from .blueprints.cart import bp as cart_bp
+    from .blueprints.checkout import bp as checkout_bp
+    from .blueprints.storefront import bp as storefront_bp
+    from .blueprints.wishlist import bp as wishlist_bp
 
     app.register_blueprint(storefront_bp)
     app.register_blueprint(cart_bp)
