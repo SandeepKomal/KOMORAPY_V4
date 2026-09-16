@@ -1,9 +1,45 @@
-# Add this as a new step in build.yml, right after "SonarQube Scan"
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # required to post/update the PR comment step
+      issues: write          # PR comments are technically posted via the Issues API
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: pytest
+        # generates coverage.xml — sonar-project.properties reads this
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Comment PR with SonarQube results
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}   # built-in — no new secret needed
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -11,7 +47,6 @@
               issue_number: context.issue.number,
             });
 
-            // find and update our own previous comment instead of piling up new ones
             const marker = '<!-- sonarqube-bot-comment -->';
             const existing = comments.find(c => c.body.includes(marker));
 
@@ -38,3 +73,37 @@
                 body,
               });
             }
+
+      - name: Generate SonarQube PDF report
+        run: python scripts/generate_sonar_report.py
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: komorav2_komorav2
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+      - name: Upload PDF report as build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sonarqube-report
+          path: sonarqube-report.pdf
+          retention-days: 90
+
+      - name: Email PDF report to code owners
+        uses: dawidd6/action-send-mail@v21
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "SonarQube Report — ${{ github.repository }} (${{ github.ref_name }})"
+          body: |
+            Automated SonarQube analysis for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
+
+            Full metrics, quality gate status, and open issues are in the attached PDF.
+
+            Triggered by: ${{ github.actor }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: sonarqube-report.pdf
