@@ -1,0 +1,47 @@
+# Config for actions/labeler@v4 — maps labels to the file paths that
+# should trigger them. A PR gets a label if ANY changed file matches
+# one of that label's patterns.
+
+python:
+  - 'app/**/*.py'
+  - 'tests/**/*.py'
+  - 'scripts/**/*.py'
+  - 'wsgi.py'
+
+templates:
+  - 'app/templates/**'
+
+static:
+  - 'app/static/**'
+
+tests:
+  - 'tests/**'
+
+ci/cd:
+  - '.github/workflows/**'
+
+docker:
+  - 'Dockerfile'
+  - 'docker-compose.yml'
+  - '.dockerignore'
+
+dependencies:
+  - 'requirements.txt'
+  - 'requirements-dev.txt'
+
+database:
+  - 'app/db.py'
+  - '*.sql'
+  - '**/*.sql'
+
+security:
+  - 'app/helpers.py'
+  - 'app/blueprints/auth.py'
+  - 'app/blueprints/admin.py'
+  - 'sonar-project.properties'
+  - '.github/workflows/codeql.yml'
+  - '.github/workflows/dast-scan.yml'
+  - '.github/workflows/ci.yml'
+
+documentation:
+  - '**/*.md'
