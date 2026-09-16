@@ -1,0 +1,62 @@
+name: Auto-format (scheduled PR, Dependabot-style)
+
+on:
+  schedule:
+    - cron: '20 19 * * *'   # daily, 7:20 PM UTC
+  workflow_dispatch:          # also runnable manually from the Actions tab
+
+jobs:
+  auto-format-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install formatters
+        run: pip install black isort
+
+      - name: Run black
+        run: black app tests scripts
+
+      - name: Run isort
+        run: isort app tests scripts
+
+      - name: Check whether anything actually changed
+        id: check
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open (or update) a Pull Request with the fixes
+        if: steps.check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "style: auto-format with black + isort"
+          branch: auto-format/scheduled
+          delete-branch: true
+          title: "🤖 Automated code formatting (black + isort)"
+          body: |
+            This PR was opened automatically by the scheduled formatting bot.
+
+            It applies `black` and `isort` fixes found in the codebase since the
+            last run. Review the diff and merge if it looks correct — this PR
+            still goes through your normal branch protection checks (SonarQube,
+            CodeQL, gitleaks) like any other PR.
+          labels: |
+            automated
+            formatting
