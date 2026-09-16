@@ -1,0 +1,40 @@
+# Add this as a new step in build.yml, right after "SonarQube Scan"
+      - name: Comment PR with SonarQube results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}   # built-in — no new secret needed
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            // find and update our own previous comment instead of piling up new ones
+            const marker = '<!-- sonarqube-bot-comment -->';
+            const existing = comments.find(c => c.body.includes(marker));
+
+            const body = `${marker}
+            ### 🔍 SonarQube Analysis
+
+            Results are available on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${context.payload.pull_request.head.ref}).
+
+            Commit: \`${context.sha.substring(0, 7)}\`
+            `;
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
