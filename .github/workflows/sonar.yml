@@ -5,10 +5,24 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+
+# If two runs get triggered for the same branch/PR close together (e.g.
+# push + pull_request firing for the same commit), only let the latest
+# one actually run — cancels the older, now-redundant run automatically
+# instead of letting both race to submit a SonarQube report for the same
+# commit, which SonarCloud rejects on the losing side.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # required to post/update the PR comment step
+      issues: write          # PR comments are technically posted via the Issues API
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,6 +44,45 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Comment PR with SonarQube results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = '<!-- sonarqube-bot-comment -->';
+            const existing = comments.find(c => c.body.includes(marker));
+
+            const body = `${marker}
+            ### 🔍 SonarQube Analysis
+
+            Results are available on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${context.payload.pull_request.head.ref}).
+
+            Commit: \`${context.sha.substring(0, 7)}\`
+            `;
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
       - name: Generate SonarQube PDF report
         run: python scripts/generate_sonar_report.py
