@@ -13,6 +13,7 @@ Required environment variables:
     SONAR_PROJECT_KEY  from sonar-project.properties (sonar.projectKey)
     SONAR_ORGANIZATION  only needed for SonarCloud, omit for self-hosted
 """
+
 import os
 import sys
 import time
@@ -21,11 +22,10 @@ from datetime import datetime
 import requests
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak,
-)
+from reportlab.platypus import (PageBreak, Paragraph, SimpleDocTemplate,
+                                Spacer, Table, TableStyle)
 
 HOST = os.environ["SONAR_HOST_URL"].rstrip("/")
 TOKEN = os.environ["SONAR_TOKEN"]
@@ -35,9 +35,16 @@ ORGANIZATION = os.environ.get("SONAR_ORGANIZATION", "")
 AUTH = (TOKEN, "")  # SonarQube Web API uses basic auth with the token as username
 
 METRIC_KEYS = [
-    "bugs", "vulnerabilities", "code_smells", "security_hotspots",
-    "coverage", "duplicated_lines_density", "ncloc",
-    "reliability_rating", "security_rating", "sqale_rating",
+    "bugs",
+    "vulnerabilities",
+    "code_smells",
+    "security_hotspots",
+    "coverage",
+    "duplicated_lines_density",
+    "ncloc",
+    "reliability_rating",
+    "security_rating",
+    "sqale_rating",
 ]
 RATING_LABELS = {"1.0": "A", "2.0": "B", "3.0": "C", "4.0": "D", "5.0": "E"}
 
@@ -69,7 +76,9 @@ def wait_for_analysis(max_wait_seconds=120):
         except Exception as e:
             print(f"  (poll error, retrying: {e})")
         time.sleep(5)
-    print(f"Gave up waiting after {max_wait_seconds}s (last status: {last_status}) — reporting with latest available data.")
+    print(
+        f"Gave up waiting after {max_wait_seconds}s (last status: {last_status}) — reporting with latest available data."
+    )
 
 
 def fetch_quality_gate():
@@ -78,21 +87,27 @@ def fetch_quality_gate():
 
 
 def fetch_measures():
-    data = api_get("/api/measures/component", {
-        "component": PROJECT_KEY,
-        "metricKeys": ",".join(METRIC_KEYS),
-    })
+    data = api_get(
+        "/api/measures/component",
+        {
+            "component": PROJECT_KEY,
+            "metricKeys": ",".join(METRIC_KEYS),
+        },
+    )
     measures = {m["metric"]: m.get("value", "—") for m in data["component"]["measures"]}
     return measures
 
 
 def fetch_top_issues(limit=25):
-    data = api_get("/api/issues/search", {
-        "componentKeys": PROJECT_KEY,
-        "resolved": "false",
-        "severities": "BLOCKER,CRITICAL,MAJOR",
-        "ps": limit,
-    })
+    data = api_get(
+        "/api/issues/search",
+        {
+            "componentKeys": PROJECT_KEY,
+            "resolved": "false",
+            "severities": "BLOCKER,CRITICAL,MAJOR",
+            "ps": limit,
+        },
+    )
     return data.get("issues", []), data.get("total", 0)
 
 
@@ -101,9 +116,14 @@ def rating_label(value):
 
 
 def build_pdf(measures, quality_gate, issues, total_issues, out_path):
-    doc = SimpleDocTemplate(out_path, pagesize=A4,
-                             topMargin=2*cm, bottomMargin=2*cm,
-                             leftMargin=2*cm, rightMargin=2*cm)
+    doc = SimpleDocTemplate(
+        out_path,
+        pagesize=A4,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+        leftMargin=2 * cm,
+        rightMargin=2 * cm,
+    )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle("TitleCustom", parent=styles["Title"], fontSize=20)
     h2 = styles["Heading2"]
@@ -111,15 +131,25 @@ def build_pdf(measures, quality_gate, issues, total_issues, out_path):
 
     story = []
     story.append(Paragraph(f"SonarQube Analysis Report — {PROJECT_KEY}", title_style))
-    story.append(Paragraph(datetime.utcnow().strftime("Generated %Y-%m-%d %H:%M UTC"), body))
-    story.append(Spacer(1, 0.5*cm))
+    story.append(
+        Paragraph(datetime.utcnow().strftime("Generated %Y-%m-%d %H:%M UTC"), body)
+    )
+    story.append(Spacer(1, 0.5 * cm))
 
     # quality gate banner
     gate_status = quality_gate.get("status", "UNKNOWN")
-    gate_color = colors.HexColor("#2e7d32") if gate_status == "OK" else colors.HexColor("#c62828")
+    gate_color = (
+        colors.HexColor("#2e7d32")
+        if gate_status == "OK"
+        else colors.HexColor("#c62828")
+    )
     gate_style = ParagraphStyle("Gate", parent=h2, textColor=gate_color)
-    story.append(Paragraph(f"Quality Gate: {'PASSED' if gate_status == 'OK' else 'FAILED'}", gate_style))
-    story.append(Spacer(1, 0.3*cm))
+    story.append(
+        Paragraph(
+            f"Quality Gate: {'PASSED' if gate_status == 'OK' else 'FAILED'}", gate_style
+        )
+    )
+    story.append(Spacer(1, 0.3 * cm))
 
     # metrics table
     story.append(Paragraph("Key Metrics", h2))
@@ -136,22 +166,33 @@ def build_pdf(measures, quality_gate, issues, total_issues, out_path):
         ["Security Rating", rating_label(measures.get("security_rating", "—"))],
         ["Maintainability Rating", rating_label(measures.get("sqale_rating", "—"))],
     ]
-    metric_table = Table(metric_rows, colWidths=[8*cm, 6*cm])
-    metric_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a2e")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f4f4f4")]),
-        ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    metric_table = Table(metric_rows, colWidths=[8 * cm, 6 * cm])
+    metric_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a2e")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f4f4f4")],
+                ),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     story.append(metric_table)
-    story.append(Spacer(1, 0.6*cm))
+    story.append(Spacer(1, 0.6 * cm))
 
     # top issues
-    story.append(Paragraph(f"Top Issues (showing {len(issues)} of {total_issues} open)", h2))
+    story.append(
+        Paragraph(f"Top Issues (showing {len(issues)} of {total_issues} open)", h2)
+    )
     if not issues:
         story.append(Paragraph("No open Blocker/Critical/Major issues. 🎉", body))
     else:
@@ -159,24 +200,35 @@ def build_pdf(measures, quality_gate, issues, total_issues, out_path):
         issue_rows = [["Severity", "Type", "File", "Message"]]
         for issue in issues:
             component = issue.get("component", "").split(":")[-1]
-            issue_rows.append([
-                Paragraph(issue.get("severity", ""), cell_style),
-                Paragraph(issue.get("type", ""), cell_style),
-                Paragraph(component, cell_style),
-                Paragraph(issue.get("message", ""), cell_style),
-            ])
-        issue_table = Table(issue_rows, colWidths=[2.3*cm, 2.5*cm, 4*cm, 7*cm])
-        issue_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a2e")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f4f4f4")]),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ]))
+            issue_rows.append(
+                [
+                    Paragraph(issue.get("severity", ""), cell_style),
+                    Paragraph(issue.get("type", ""), cell_style),
+                    Paragraph(component, cell_style),
+                    Paragraph(issue.get("message", ""), cell_style),
+                ]
+            )
+        issue_table = Table(issue_rows, colWidths=[2.3 * cm, 2.5 * cm, 4 * cm, 7 * cm])
+        issue_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a2e")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f4f4f4")],
+                    ),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]
+            )
+        )
         story.append(issue_table)
 
     doc.build(story)

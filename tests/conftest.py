@@ -8,6 +8,7 @@ blueprint does `from ..db import query_one, ...`, which binds the name
 into that module's own namespace, so the mock has to be patched at each
 blueprint's import point, not just on app.db itself.
 """
+
 import os
 import sys
 
@@ -22,10 +23,10 @@ import pytest
 
 BLUEPRINT_MODULES = [
     "app.helpers",  # add_to_cart, get_cart_rows, get_wishlist_ids, is_login_locked_out,
-                    # record_failed_login, clear_failed_logins, get_categories, get_brands
-                    # all live here and import query_one/query_all/execute into this
-                    # module's own namespace — miss this one and half the suite would
-                    # silently try to hit a real (fake) database instead of the mock.
+    # record_failed_login, clear_failed_logins, get_categories, get_brands
+    # all live here and import query_one/query_all/execute into this
+    # module's own namespace — miss this one and half the suite would
+    # silently try to hit a real (fake) database instead of the mock.
     "app.blueprints.storefront",
     "app.blueprints.cart",
     "app.blueprints.wishlist",
@@ -71,6 +72,7 @@ def mock_db(mocker):
 @pytest.fixture
 def app(mock_db):
     from app import create_app
+
     flask_app = create_app()
     flask_app.config.update(TESTING=True, PROPAGATE_EXCEPTIONS=True)
     return flask_app
@@ -88,29 +90,42 @@ def sample_product():
     a DECIMAL column — a real source of bugs a naive int/float stub
     would never catch)."""
     from decimal import Decimal
+
     return {
-        "product_id": 1, "product_title": "Test Product",
-        "product_description": "A test product", "product_keywords": "test",
-        "category_id": 1, "brand_id": 1,
-        "product_image1": "test1.jpg", "product_image2": "", "product_image3": "",
-        "price": Decimal("1999.00"), "status": "true",
+        "product_id": 1,
+        "product_title": "Test Product",
+        "product_description": "A test product",
+        "product_keywords": "test",
+        "category_id": 1,
+        "brand_id": 1,
+        "product_image1": "test1.jpg",
+        "product_image2": "",
+        "product_image3": "",
+        "price": Decimal("1999.00"),
+        "status": "true",
     }
 
 
 @pytest.fixture
 def sample_customer():
     return {
-        "user_id": 1, "username": "testuser", "user_email": "test@example.com",
+        "user_id": 1,
+        "username": "testuser",
+        "user_email": "test@example.com",
         "user_password": "$2b$12$fakehashfakehashfakehashfakehashfakehashfake",
-        "user_address": "123 Test St", "user_mobile": "9999999999",
-        "user_image": "", "user_ip": "127.0.0.1",
+        "user_address": "123 Test St",
+        "user_mobile": "9999999999",
+        "user_image": "",
+        "user_ip": "127.0.0.1",
     }
 
 
 @pytest.fixture
 def sample_admin():
     return {
-        "admin_id": 1, "admin_username": "testadmin", "admin_email": "admin@example.com",
+        "admin_id": 1,
+        "admin_username": "testadmin",
+        "admin_email": "admin@example.com",
         "admin_password": "$2b$12$fakehashfakehashfakehashfakehashfakehashfake",
         "admin_image": "",
     }
@@ -136,6 +151,7 @@ def get_csrf_token(client, path):
     """Loads a GET page and pulls the csrf_token hidden field out of it —
     every POST test needs a real token or csrf_check() will 403 it."""
     import re
+
     resp = client.get(path)
     match = re.search(r'name="csrf_token" value="([^"]+)"', resp.data.decode())
     assert match, f"No csrf_token found on {path}"

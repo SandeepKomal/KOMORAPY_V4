@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
 
-from ..db import query_one, execute
-from ..helpers import get_ip, get_cart_rows, add_to_cart, csrf_check, get_logged_in_user_id, safe_redirect_target
+from ..db import execute, query_one
+from ..helpers import (add_to_cart, csrf_check, get_cart_rows, get_ip,
+                       get_logged_in_user_id, safe_redirect_target)
 
 bp = Blueprint("cart", __name__)
 
@@ -33,7 +35,9 @@ def view():
         # same id so it can never be confused with any other row's field.
         if "update_cart" in request.form:
             product_id = request.form.get("update_cart", type=int)
-            quantity = max(1, request.form.get(f"quantity_{product_id}", type=int, default=1))
+            quantity = max(
+                1, request.form.get(f"quantity_{product_id}", type=int, default=1)
+            )
             execute(
                 "UPDATE cart_details SET quantity=%s WHERE ip_address=%s AND product_id=%s",
                 (quantity, ip, product_id),
@@ -49,7 +53,11 @@ def view():
                     "DELETE FROM cart_details WHERE ip_address=%s AND product_id=%s",
                     (ip, product_id),
                 )
-            flash("Removed from bag" if remove_ids else "Select at least one item to remove")
+            flash(
+                "Removed from bag"
+                if remove_ids
+                else "Select at least one item to remove"
+            )
             return redirect(url_for("cart.view"))
 
     rows = get_cart_rows()

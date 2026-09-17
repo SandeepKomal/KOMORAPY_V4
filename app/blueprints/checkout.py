@@ -1,8 +1,11 @@
 import random
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
 
-from ..db import query_one, query_all, execute
-from ..helpers import get_ip, get_logged_in_user_id, csrf_check, product_image_path
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
+
+from ..db import execute, query_all, query_one
+from ..helpers import (csrf_check, get_ip, get_logged_in_user_id,
+                       product_image_path)
 
 bp = Blueprint("checkout", __name__)
 
@@ -13,7 +16,9 @@ def _cart_line_items():
     items = []
     total = 0
     for line in cart_lines:
-        product = query_one("SELECT * FROM products WHERE product_id=%s", (line["product_id"],))
+        product = query_one(
+            "SELECT * FROM products WHERE product_id=%s", (line["product_id"],)
+        )
         if not product:
             continue
         quantity = max(1, line["quantity"])
@@ -63,7 +68,9 @@ def address():
 
     return render_template(
         "storefront/address.html",
-        items=items, saved_address=saved_address, saved_mobile=saved_mobile,
+        items=items,
+        saved_address=saved_address,
+        saved_mobile=saved_mobile,
     )
 
 
@@ -92,7 +99,13 @@ def payment():
                     "INSERT INTO user_orders (user_id, amount_due, invoice_number, "
                     "total_products, order_date, order_status, product_id) "
                     "VALUES (%s, %s, %s, %s, NOW(), 'Complete', %s)",
-                    (user_id, item["line_total"], invoice_number, item["quantity"], item["product_id"]),
+                    (
+                        user_id,
+                        item["line_total"],
+                        invoice_number,
+                        item["quantity"],
+                        item["product_id"],
+                    ),
                 )
                 execute(
                     "INSERT INTO orders_pending (user_id, invoice_number, product_id, "
@@ -115,7 +128,8 @@ def payment():
 
     return render_template(
         "storefront/payment.html",
-        items=items, total=total,
+        items=items,
+        total=total,
         checkout_address=session.get("checkout_address"),
         checkout_mobile=session.get("checkout_mobile"),
     )

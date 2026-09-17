@@ -5,9 +5,9 @@ import time
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-from flask import session, request, current_app
+from flask import current_app, request, session
 
-from .db import query_one, query_all, execute
+from .db import execute, query_all, query_one
 
 LOGIN_ATTEMPT_LIMIT = 5
 LOGIN_ATTEMPT_WINDOW_MINUTES = 15
@@ -51,7 +51,11 @@ def csrf_check():
     submitted = request.form.get("csrf_token", "")
     if not submitted or submitted != session.get("csrf_token"):
         from flask import abort
-        abort(403, "Security check failed — please go back, refresh the page, and try again.")
+
+        abort(
+            403,
+            "Security check failed — please go back, refresh the page, and try again.",
+        )
 
 
 # ---------- login rate-limiting ----------
@@ -102,7 +106,9 @@ def get_cart_rows():
     cart_rows = query_all("SELECT * FROM cart_details WHERE ip_address=%s", (ip,))
     rows = []
     for c in cart_rows:
-        product = query_one("SELECT * FROM products WHERE product_id=%s", (c["product_id"],))
+        product = query_one(
+            "SELECT * FROM products WHERE product_id=%s", (c["product_id"],)
+        )
         if product:
             product["cart_quantity"] = c["quantity"]
             rows.append(product)
@@ -115,7 +121,8 @@ def add_to_cart(product_id):
     on the same product repeatedly behaves the way people actually expect."""
     ip = get_ip()
     existing = query_one(
-        "SELECT * FROM cart_details WHERE ip_address=%s AND product_id=%s", (ip, product_id)
+        "SELECT * FROM cart_details WHERE ip_address=%s AND product_id=%s",
+        (ip, product_id),
     )
     if existing:
         new_quantity = max(1, existing["quantity"]) + 1
@@ -135,7 +142,9 @@ def add_to_cart(product_id):
 def get_wishlist_ids(user_id):
     if not user_id:
         return []
-    rows = query_all("SELECT product_id FROM wishlist_details WHERE user_id=%s", (user_id,))
+    rows = query_all(
+        "SELECT product_id FROM wishlist_details WHERE user_id=%s", (user_id,)
+    )
     return [r["product_id"] for r in rows]
 
 
@@ -165,6 +174,7 @@ def _cover_crop(img, target_size):
     cover) — so a portrait photo and a wide photo both end up looking
     consistent side by side on the product grid."""
     from PIL import Image
+
     target_w, target_h = target_size
     target_ratio = target_w / target_h
     src_w, src_h = img.size
@@ -192,18 +202,25 @@ def save_upload(file_storage, dest_dir, target_size=None):
     None if the file failed validation."""
     if not file_storage or not file_storage.filename:
         return None
-    ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else ""
+    ext = (
+        file_storage.filename.rsplit(".", 1)[-1].lower()
+        if "." in file_storage.filename
+        else ""
+    )
     if ext not in ALLOWED_IMAGE_EXT:
         return None
 
     from PIL import Image
+
     try:
         file_storage.stream.seek(0)
         Image.open(file_storage.stream).verify()  # same defense-in-depth as before
         file_storage.stream.seek(0)
         img = Image.open(file_storage.stream)
         img.load()
-        detected_format = img.format  # Pillow's own read of the actual bytes, e.g. "JPEG" — not the filename
+        detected_format = (
+            img.format
+        )  # Pillow's own read of the actual bytes, e.g. "JPEG" — not the filename
     except Exception:
         return None
 

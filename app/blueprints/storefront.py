@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request
 
-from ..db import query_one, query_all
-from ..helpers import get_wishlist_ids, get_logged_in_user_id
+from ..db import query_all, query_one
+from ..helpers import get_logged_in_user_id, get_wishlist_ids
 
 bp = Blueprint("storefront", __name__)
 
@@ -65,8 +65,11 @@ def product_details(product_id):
     product = query_one("SELECT * FROM products WHERE product_id=%s", (product_id,))
     if not product:
         from flask import abort
+
         abort(404)
-    category = query_one("SELECT * FROM categories WHERE category_id=%s", (product["category_id"],))
+    category = query_one(
+        "SELECT * FROM categories WHERE category_id=%s", (product["category_id"],)
+    )
     brand = query_one("SELECT * FROM brands WHERE brand_id=%s", (product["brand_id"],))
     related = query_all(
         "SELECT * FROM products WHERE category_id=%s AND product_id != %s LIMIT 4",
@@ -74,5 +77,8 @@ def product_details(product_id):
     )
     return render_template(
         "storefront/product_details.html",
-        product=product, category=category, brand=brand, related=related,
+        product=product,
+        category=category,
+        brand=brand,
+        related=related,
     )
