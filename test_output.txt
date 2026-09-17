@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/runner/work/KOMORAPY_V4/KOMORAPY_V4
+configfile: pytest.ini
+testpaths: tests
+plugins: cov-7.1.0, mock-3.15.1
+collected 117 items
+
+tests/test_admin.py ...........................                          [ 23%]
+tests/test_auth.py ....................                                  [ 40%]
+tests/test_cart.py ..........                                            [ 48%]
+tests/test_checkout.py ............                                      [ 58%]
+tests/test_helpers.py ......................                             [ 77%]
+tests/test_storefront.py ................                                [ 91%]
+tests/test_wishlist.py ..........                                        [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.14-final-0 _______________
+
+Name                           Stmts   Miss  Cover   Missing
+------------------------------------------------------------
+app/__init__.py                   75      8    89%   24, 71-72, 114, 118, 136-139
+app/blueprints/__init__.py         0      0   100%
+app/blueprints/admin.py          239     84    65%   78-79, 100, 102, 127, 148-195, 205-260, 303-317, 323-326, 340-350, 356-365, 371-374, 388-391
+app/blueprints/auth.py           104      7    93%   50, 52, 93-96, 159, 163
+app/blueprints/cart.py            37      0   100%
+app/blueprints/checkout.py        81      4    95%   23, 53, 87-88
+app/blueprints/storefront.py      44      0   100%
+app/blueprints/wishlist.py        37      0   100%
+app/db.py                         26     13    50%   10-19, 25, 34-36, 41-43, 48-50
+app/helpers.py                   124      3    98%   21, 144, 229
+------------------------------------------------------------
+TOTAL                            767    119    84%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+============================= 117 passed in 10.35s =============================
