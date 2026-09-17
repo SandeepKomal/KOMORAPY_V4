@@ -1,0 +1,58 @@
+name: Pin GitHub Actions to SHA
+
+on:
+  schedule:
+    - cron: '0 6 * * MON'   # weekly, Monday 6am UTC
+  workflow_dispatch:
+
+jobs:
+  pin-actions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pin any mutable action references to their current commit SHA
+        uses: mheap/pin-github-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check whether anything actually changed
+        id: check
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open (or update) a Pull Request with the pinned versions
+        if: steps.check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "security: pin GitHub Actions to commit SHA"
+          branch: pin-actions/scheduled
+          delete-branch: true
+          title: "🔒 Pin GitHub Actions to commit SHA"
+          body: |
+            This PR was opened automatically to pin any GitHub Actions still
+            referenced by a mutable tag (e.g. `@v4`) to their current commit SHA.
+
+            Pinning to a SHA prevents a compromised or malicious update to an
+            action from silently affecting this repo — a tag like `@v4` can be
+            repointed by the action's maintainer (or an attacker who compromises
+            their account) to entirely different code at any time; a commit SHA
+            cannot be changed after the fact.
+
+            Review the diff and merge if it looks correct — this still goes
+            through your normal branch protection checks.
+          labels: |
+            automated
+            security
