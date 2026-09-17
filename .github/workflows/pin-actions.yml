@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Pin any mutable action references to their current commit SHA
-        uses: mheap/pin-github-action@v3
+        uses: mheap/pin-github-action@v3.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
