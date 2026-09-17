@@ -1,0 +1,77 @@
+name: Update test count badge
+
+on:
+  workflow_run:
+    workflows: ["Build"]   # runs right after tests + SonarQube pass on main
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  update-badge:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests and capture the passing count
+        id: tests
+        run: |
+          set -o pipefail
+          pytest -q 2>&1 | tee test_output.txt
+          COUNT=$(grep -oE '[0-9]+ passed' test_output.txt | grep -oE '[0-9]+' | tail -1)
+          echo "count=${COUNT:-0}" >> "$GITHUB_OUTPUT"
+
+      - name: Update the badge line in README.md
+        run: |
+          COUNT="${{ steps.tests.outputs.count }}"
+          NEW_LINE="<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-${COUNT}%20passing-brightgreen)<!-- /tests-badge -->"
+
+          if grep -q '<!-- tests-badge -->' README.md; then
+            sed -i "s|<!-- tests-badge -->.*<!-- /tests-badge -->|${NEW_LINE}|" README.md
+          else
+            sed -i "1i ${NEW_LINE}\n" README.md
+          fi
+
+      - name: Check whether anything actually changed
+        id: check
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open (or update) a Pull Request with the updated badge
+        if: steps.check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: update test count badge (${{ steps.tests.outputs.count }} passing)"
+          branch: update-test-badge
+          delete-branch: true
+          title: "📊 Update test count badge (${{ steps.tests.outputs.count }} tests passing)"
+          body: |
+            Automatically updates the test count badge in README.md to reflect
+            the current number of passing tests, after the latest successful
+            build on main.
+          labels: |
+            automated
+            documentation
