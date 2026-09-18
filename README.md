@@ -1,3 +1,5 @@
+<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-117%20passing-brightgreen)<!-- /tests-badge -->
+
 
 #ECOMM-KOMORA
 ## USER INTERFACE
