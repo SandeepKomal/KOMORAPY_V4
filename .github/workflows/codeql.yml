@@ -1,14 +1,22 @@
 name: CodeQL SAST Scan
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   schedule:
     # weekly scan even if nothing's pushed, catches newly-disclosed
     # vulnerability patterns in existing code
     - cron: '30 1 * * 1'
+  workflow_run:
+    # chained to run right after gitleaks completes on a push to main —
+    # this REPLACES a direct push trigger here (not in addition to one),
+    # so a single push fires gitleaks, which fires this, exactly once.
+    # PR runs still trigger directly via `pull_request` above, unaffected.
+    workflows: ["gitleaks"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   analyze:
@@ -22,6 +30,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          # use the exact commit gitleaks just scanned when chained;
+          # fall back to the normal triggering commit otherwise
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -48,8 +60,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
 
+      # ── Parse results and publish to GitHub Actions Summary ───────────
+      - name: Publish results to Actions Summary
+        if: always()
+        run: |
+          echo "## 🔎 CodeQL SAST Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${{ github.event.workflow_run.head_sha || github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Full findings (bugs and vulnerabilities detected by static analysis) are in the attached PDF artifact, and in the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning)." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload CodeQL PDF report as build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: codeql-report
           path: codeql-report.pdf
