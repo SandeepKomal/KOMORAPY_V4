@@ -1,10 +1,17 @@
 name: Build
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_run:
+    # chained to run right after CodeQL completes on a push to main —
+    # this REPLACES a direct push trigger here (not in addition to one),
+    # so a single push fires gitleaks -> codeql -> this, exactly once
+    # each. PR runs still trigger directly via `pull_request` above.
+    workflows: ["CodeQL SAST Scan"]
+    types:
+      - completed
+    branches:
+      - main
 
 # If two runs get triggered for the same branch/PR close together (e.g.
 # push + pull_request firing for the same commit), only let the latest
@@ -26,6 +33,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # use the exact commit CodeQL just scanned when chained;
+          # fall back to the normal triggering commit otherwise
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Set up Python
@@ -92,8 +102,18 @@ jobs:
           SONAR_PROJECT_KEY: komorav2_komorav2
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
+      # ── Parse results and publish to GitHub Actions Summary ───────────
+      - name: Publish results to Actions Summary
+        if: always()
+        run: |
+          echo "## 📊 SonarQube Analysis" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${{ github.event.workflow_run.head_sha || github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Full metrics, quality gate status, and open issues are in the attached PDF artifact, and on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${{ github.ref_name }})." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload PDF report as build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: sonarqube-report
           path: sonarqube-report.pdf
