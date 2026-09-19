@@ -1,0 +1,69 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '35 11 * * 6'
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ---- SARIF version: feeds GitHub's Security tab ----
+      - name: Run Trivy (SARIF for Security tab)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # ---- Table version: feeds the Actions run summary + email body ----
+      - name: Run Trivy (table for summary/email)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          output: 'trivy-results.txt'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+        # Trivy exits non-zero when it finds matching-severity issues by default here;
+        # we don't set exit-code, so the workflow won't fail the job on findings.
+
+      - name: Publish results to Actions dashboard
+        if: always()
+        run: |
+          echo "## 🔍 Trivy Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Send email report
+        if: always()
+        uses: dawidd6/action-send-mail@v4
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Trivy Scan Report - ${{ github.repository }} (${{ github.ref_name }})"
+          to: your-team@example.com
+          from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
+          body: file://trivy-results.txt
+          attachments: trivy-results.sarif
