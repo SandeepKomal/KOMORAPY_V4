@@ -21,7 +21,7 @@ jobs:
 
       # ---- SARIF version: feeds GitHub's Security tab ----
       - name: Run Trivy (SARIF for Security tab)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -36,15 +36,13 @@ jobs:
 
       # ---- Table version: feeds the Actions run summary + email body ----
       - name: Run Trivy (table for summary/email)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
           output: 'trivy-results.txt'
           severity: 'CRITICAL,HIGH,MEDIUM'
-        # Trivy exits non-zero when it finds matching-severity issues by default here;
-        # we don't set exit-code, so the workflow won't fail the job on findings.
 
       - name: Publish results to Actions dashboard
         if: always()
