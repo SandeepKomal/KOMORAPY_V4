@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Pin any mutable action references to their current commit SHA
-        uses: mheap/pin-github-action@v3.4.0
+        uses: mheap/pin-github-action@v3.5.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -34,7 +34,7 @@ jobs:
 
       - name: Open (or update) a Pull Request with the pinned versions
         if: steps.check.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "security: pin GitHub Actions to commit SHA"

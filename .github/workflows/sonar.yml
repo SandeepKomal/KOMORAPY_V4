@@ -57,7 +57,7 @@ jobs:
 
       - name: Comment PR with SonarQube results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -113,14 +113,14 @@ jobs:
           echo "Full metrics, quality gate status, and open issues are in the attached PDF artifact, and on the [SonarCloud dashboard](https://sonarcloud.io/dashboard?id=komorav2_komorav2&branch=${{ github.ref_name }})." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload PDF report as build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sonarqube-report
           path: sonarqube-report.pdf
           retention-days: 90
 
       - name: Email PDF report to code owners
-        uses: dawidd6/action-send-mail@v21
+        uses: dawidd6/action-send-mail@v22
         with:
           server_address: smtp.gmail.com
           server_port: 465
