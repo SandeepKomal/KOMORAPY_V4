@@ -1,5 +1,16 @@
 name: gitleaks
-on: [pull_request, push, workflow_dispatch]
+on:
+  pull_request:                # unchanged — required PR check, immediate feedback
+  workflow_dispatch:
+  schedule:
+    # Drives the whole chain (gitleaks -> codeql -> sonar) once a day
+    # instead of on every push to main. All three already run on every
+    # PR as required checks before merge, so re-running the identical
+    # scans again immediately after every merge is mostly duplicate work
+    # for code that was just scanned minutes earlier. A daily sweep still
+    # catches anything unusual (a bypassed check, an odd merge
+    # combination) without the redundant CI cost of doing it per-push.
+    - cron: '0 2 * * *'   # daily, 2am UTC — adjust the hour if you prefer
 
 permissions:
   contents: read
@@ -13,7 +24,22 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v3
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+          # Both already default to true — set explicitly so the behavior
+          # is visible directly in this file rather than relying on an
+          # undocumented default:
+          GITLEAKS_ENABLE_SUMMARY: "true"          # writes results straight to the Actions job summary
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "true"   # uploads a SARIF artifact automatically if secrets are found
+
+      # ── Publish a completion marker to the Actions Summary ───────────
+      - name: Add completion marker to summary
+        if: always()
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ Gitleaks scan completed for commit \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
