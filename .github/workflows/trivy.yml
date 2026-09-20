@@ -1,67 +1,83 @@
-name: Trivy Security Scan
+name: Trivy Filesystem Scan
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '35 11 * * 6'
+    # daily, alongside the rest of the security chain
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   trivy-scan:
+    name: Trivy
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
+      security-events: write   # required to upload SARIF results
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
-      # ---- SARIF version: feeds GitHub's Security tab ----
-      - name: Run Trivy (SARIF for Security tab)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-results.json
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 0   # report findings without failing the build — same "informational" stance as the Snyk gate
 
-      - name: Upload SARIF to Security tab
+      - name: Also generate a SARIF report for the Security tab
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 0
+
+      - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: trivy-results.sarif
 
-      # ---- Table version: feeds the Actions run summary + email body ----
-      - name: Run Trivy (table for summary/email)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          output: 'trivy-results.txt'
-          severity: 'CRITICAL,HIGH,MEDIUM'
-
-      - name: Publish results to Actions dashboard
+      # ── Parse results and publish to GitHub Actions Summary ───────────
+      - name: Publish results to Actions Summary
         if: always()
         run: |
-          echo "## 🔍 Trivy Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat trivy-results.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## 🛡️ Trivy Filesystem Scan" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Full results are in the attached JSON artifact, and on the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning)." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Send email report
-        if: always()
-        uses: dawidd6/action-send-mail@v4
+      - name: Upload Trivy report as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-results.json
+          retention-days: 90
+
+      - name: Email Trivy report to code owners
+        uses: dawidd6/action-send-mail@v21
         with:
           server_address: smtp.gmail.com
           server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Trivy Scan Report - ${{ github.repository }} (${{ github.ref_name }})"
-          to: your-team@example.com
-          from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
-          body: file://trivy-results.txt
-          attachments: trivy-results.sarif
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "Trivy Filesystem Scan — ${{ github.repository }} (${{ github.ref_name }})"
+          body: |
+            Automated Trivy filesystem/dependency scan for commit ${{ github.sha }} on branch ${{ github.ref_name }}.
+
+            Full findings (vulnerable dependencies and misconfigurations) are in the attached JSON file, and also visible in the repo's Security tab.
+
+            Triggered by: ${{ github.actor }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: trivy-results.json
