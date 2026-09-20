@@ -71,14 +71,14 @@ jobs:
           echo "Full findings (bugs and vulnerabilities detected by static analysis) are in the attached PDF artifact, and in the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning)." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload CodeQL PDF report as build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: codeql-report
           path: codeql-report.pdf
           retention-days: 90
 
       - name: Email CodeQL report
-        uses: dawidd6/action-send-mail@v20
+        uses: dawidd6/action-send-mail@v22
         with:
           server_address: smtp.gmail.com
           server_port: 465
