@@ -1,6 +1,9 @@
 name: KOMORA Project Health Bot
 
 on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * *"
   workflow_run:
     workflows:
       - "Build"
@@ -52,6 +55,7 @@ jobs:
       - name: Generate project health report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
           CURRENT_WORKFLOW: ${{ github.event.workflow_run.name }}
           CURRENT_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           CURRENT_BRANCH: ${{ github.event.workflow_run.head_branch }}
@@ -99,6 +103,12 @@ jobs:
                   "neutral": "NEUTRAL",
               }.get(conclusion, "INFO")
 
+          workflow = os.environ.get("CURRENT_WORKFLOW") or "Manual / Scheduled health check"
+          conclusion = os.environ.get("CURRENT_CONCLUSION") or "not applicable"
+          branch = os.environ.get("CURRENT_BRANCH") or "main"
+          sha = os.environ.get("CURRENT_SHA") or "n/a"
+          url = os.environ.get("CURRENT_URL") or f"https://github.com/{repo}/actions"
+
           lines = [
               "# KOMORA Project Health",
               "",
@@ -107,13 +117,14 @@ jobs:
               "",
               f"Last updated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
               "",
-              "## Latest Workflow Run",
+              "## Trigger",
               "",
-              f"- Workflow: {os.environ['CURRENT_WORKFLOW']}",
-              f"- Result: {icon(os.environ['CURRENT_CONCLUSION'])} {os.environ['CURRENT_CONCLUSION']}",
-              f"- Branch: {os.environ['CURRENT_BRANCH']}",
-              f"- Commit: {os.environ['CURRENT_SHA'][:7]}",
-              f"- Run: {os.environ['CURRENT_URL']}",
+              f"- Event: `{os.environ["EVENT_NAME"]}`",
+              f"- Workflow: {workflow}",
+              f"- Result: {icon(conclusion)} {conclusion}",
+              f"- Branch: {branch}",
+              f"- Commit: {sha[:7]}",
+              f"- Run: {url}",
               "",
               "## Recent CI Activity",
               "",
