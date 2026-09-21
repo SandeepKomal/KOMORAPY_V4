@@ -1,0 +1,198 @@
+name: KOMORA Project Health Bot
+
+on:
+  workflow_run:
+    workflows:
+      - "Build"
+      - "Build, Scan, and Push to ECR"
+      - "Auto-format (scheduled PR, Dependabot-style)"
+      - "gitleaks"
+      - "CodeQL"
+      - "SonarQube"
+      - "Trivy"
+      - "SIM AI"
+    types:
+      - completed
+    branches:
+      - main
+
+concurrency:
+  group: komora-project-health-report
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-health-report:
+    name: Update project health report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout report branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare report branch
+        env:
+          REPORT_BRANCH: bot/project-health-report
+        run: |
+          git fetch origin main
+          if git ls-remote --exit-code --heads origin "$REPORT_BRANCH" >/dev/null 2>&1; then
+            git fetch origin "$REPORT_BRANCH"
+            git checkout -B "$REPORT_BRANCH" "origin/$REPORT_BRANCH"
+          else
+            git checkout -B "$REPORT_BRANCH" origin/main
+          fi
+
+      - name: Generate project health report
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_WORKFLOW: ${{ github.event.workflow_run.name }}
+          CURRENT_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          CURRENT_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          CURRENT_SHA: ${{ github.event.workflow_run.head_sha }}
+          CURRENT_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          mkdir -p reports
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          raw = subprocess.check_output(
+              ["gh", "api", f"repos/{repo}/actions/runs?branch=main&per_page=50"],
+              text=True,
+          )
+          runs = json.loads(raw).get("workflow_runs", [])
+
+          names = {
+              "Build",
+              "Build, Scan, and Push to ECR",
+              "Auto-format (scheduled PR, Dependabot-style)",
+              "gitleaks",
+              "CodeQL",
+              "SonarQube",
+              "Trivy",
+              "SIM AI",
+          }
+
+          runs = [
+              r for r in runs
+              if r.get("name") in names and r.get("head_branch") == "main"
+          ][:20]
+
+          def icon(conclusion):
+              return {
+                  "success": "OK",
+                  "failure": "FAILED",
+                  "cancelled": "CANCELLED",
+                  "skipped": "SKIPPED",
+                  "timed_out": "TIMEOUT",
+                  "neutral": "NEUTRAL",
+              }.get(conclusion, "INFO")
+
+          lines = [
+              "# KOMORA Project Health",
+              "",
+              "> Automatically maintained by KOMORA DevOps Bot.",
+              "> This report is generated from recent GitHub Actions workflow runs on main.",
+              "",
+              f"Last updated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+              "",
+              "## Latest Workflow Run",
+              "",
+              f"- Workflow: {os.environ['CURRENT_WORKFLOW']}",
+              f"- Result: {icon(os.environ['CURRENT_CONCLUSION'])} {os.environ['CURRENT_CONCLUSION']}",
+              f"- Branch: {os.environ['CURRENT_BRANCH']}",
+              f"- Commit: {os.environ['CURRENT_SHA'][:7]}",
+              f"- Run: {os.environ['CURRENT_URL']}",
+              "",
+              "## Recent CI Activity",
+              "",
+              "| Workflow | Result | Commit | Updated | Run |",
+              "|---|---|---|---|---|",
+          ]
+
+          for r in runs:
+              conclusion = r.get("conclusion") or r.get("status") or "unknown"
+              updated = (r.get("updated_at") or r.get("created_at") or "")[:16].replace("T", " ")
+              sha = (r.get("head_sha") or "")[:7]
+              url = r.get("html_url", "")
+              name = r.get("name", "Unknown")
+              lines.append(
+                  f"| {name} | {icon(conclusion)} {conclusion} | {sha} | {updated} UTC | {url} |"
+              )
+
+          success = sum(r.get("conclusion") == "success" for r in runs)
+          failures = sum(r.get("conclusion") == "failure" for r in runs)
+
+          lines += [
+              "",
+              "## Summary",
+              "",
+              f"- Workflow runs shown: {len(runs)}",
+              f"- Successful runs: {success}",
+              f"- Failed runs: {failures}",
+              "",
+              "## Bot Responsibilities",
+              "",
+              "- Monitor CI workflow completion.",
+              "- Maintain this project health report.",
+              "- Keep a visible history of recent automation results.",
+              "- Open or update the automated report PR for review.",
+              "",
+              "---",
+              "",
+              "Generated automatically by KOMORA DevOps Bot.",
+              "",
+          ]
+
+          with open("reports/project-health.md", "w", encoding="utf-8") as f:
+              f.write("\n".join(lines))
+          PY
+
+      - name: Commit and push report
+        env:
+          REPORT_BRANCH: bot/project-health-report
+        run: |
+          git config user.name "KOMORA DevOps Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add reports/project-health.md
+
+          if git diff --cached --quiet; then
+            echo "No report changes."
+            exit 0
+          fi
+
+          git commit -m "🤖 Update automated project health report"
+          git push origin "$REPORT_BRANCH"
+
+      - name: Create or update report PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPORT_BRANCH: bot/project-health-report
+        run: |
+          PR_NUMBER=$(gh pr list --head "$REPORT_BRANCH" --base main --state open --json number --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create               --base main               --head "$REPORT_BRANCH"               --title "🤖 Automated project health report"               --body "## KOMORA DevOps Bot
+
+          This PR is maintained automatically by the KOMORA DevOps Bot.
+
+          It updates reports/project-health.md with recent GitHub Actions health information.
+
+          Please review and merge when appropriate.
+
+          The bot will continue updating the same PR as new workflow runs complete."
+          else
+            echo "Existing health report PR: #$PR_NUMBER"
+          fi
