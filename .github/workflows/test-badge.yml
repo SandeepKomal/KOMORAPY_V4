@@ -1,6 +1,9 @@
 name: Update test count badge
 
 on:
+  push:
+    branches:
+      - main
   workflow_run:
     workflows: ["Build"]   # runs right after tests + SonarQube pass on main
     types:
