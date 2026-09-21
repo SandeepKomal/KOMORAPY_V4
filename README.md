@@ -1,3 +1,6 @@
+<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-117%20passing-brightgreen)<!-- /tests-badge -->
+<!-- coverage-badge -->![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)<!-- /coverage-badge -->
+
 ## USER INTERFACE
 ### KOMORA the ecommerce app
 
