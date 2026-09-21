@@ -19,9 +19,11 @@ jobs:
           fetch-depth: 0
 
       - name: Pin any mutable action references to their current commit SHA
-        uses: mheap/pin-github-action@v3.5.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install -g pin-github-action
+          pin-github-action .github/workflows/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check whether anything actually changed
         id: check
@@ -44,13 +46,11 @@ jobs:
           body: |
             This PR was opened automatically to pin any GitHub Actions still
             referenced by a mutable tag (e.g. `@v4`) to their current commit SHA.
-
             Pinning to a SHA prevents a compromised or malicious update to an
             action from silently affecting this repo — a tag like `@v4` can be
             repointed by the action's maintainer (or an attacker who compromises
             their account) to entirely different code at any time; a commit SHA
             cannot be changed after the fact.
-
             Review the diff and merge if it looks correct — this still goes
             through your normal branch protection checks.
           labels: |
