@@ -1,0 +1,74 @@
+name: CI Completion Bot
+
+on:
+  workflow_run:
+    workflows:
+      - "Build"
+      - "Build, Scan, and Push to ECR"
+      - "Auto-format (scheduled PR, Dependabot-style)"
+      - "gitleaks"
+      - "CodeQL"
+      - "SonarQube"
+      - "Trivy"
+      - "SIM AI"
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment workflow result
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Comment on associated pull requests
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const run = context.payload.workflow_run;
+
+            const icon = {
+              success: "✅",
+              failure: "❌",
+              cancelled: "⏹️",
+              skipped: "⏭️",
+              neutral: "⚪",
+              timed_out: "⏰",
+              action_required: "⚠️"
+            }[run.conclusion] || "ℹ️";
+
+            const pullRequests = run.pull_requests || [];
+
+            if (pullRequests.length === 0) {
+              console.log("Workflow run is not associated with a pull request.");
+              return;
+            }
+
+            for (const pr of pullRequests) {
+              const body = [
+                `## ${icon} GitHub Actions Bot`,
+                "",
+                `**Workflow:** ${run.name}`,
+                `**Status:** \`${run.conclusion}\``,
+                `**Branch:** \`${run.head_branch || "unknown"}\``,
+                `**Commit:** \`${run.head_sha.substring(0, 7)}\``,
+                "",
+                `[View workflow run](${run.html_url})`,
+                "",
+                "---",
+                "🤖 Automated status update from **KOMORAPY_V4 CI Bot**."
+              ].join("\n");
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body
+              });
+            }
