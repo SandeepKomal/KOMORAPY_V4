@@ -43,27 +43,59 @@ jobs:
               action_required: "⚠️"
             }[run.conclusion] || "ℹ️";
 
-            const pullRequests = run.pull_requests || [];
+            // workflow_run can have an empty pull_requests array,
+            // especially when the triggering workflow ran after a merge.
+            // Resolve the PRs from the workflow commit instead.
+            let pullRequests = run.pull_requests || [];
+
+            if (pullRequests.length === 0 && run.head_sha) {
+              const response =
+                await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  commit_sha: run.head_sha
+                });
+
+              pullRequests = response.data;
+            }
 
             if (pullRequests.length === 0) {
-              console.log("Workflow run is not associated with a pull request.");
+              console.log(`No PR found for commit ${run.head_sha}`);
               return;
             }
 
+            const marker = `<!-- ci-bot:${run.id} -->`;
+
+            const body = [
+              marker,
+              `## ${icon} GitHub Actions Bot`,
+              "",
+              `**Workflow:** ${run.name}`,
+              `**Status:** \`${run.conclusion}\``,
+              `**Branch:** \`${run.head_branch || "unknown"}\``,
+              `**Commit:** \`${run.head_sha.substring(0, 7)}\``,
+              "",
+              `[View workflow run](${run.html_url})`,
+              "",
+              "---",
+              "🤖 Automated status update from **KOMORAPY_V4 CI Bot**."
+            ].join("\n");
+
             for (const pr of pullRequests) {
-              const body = [
-                `## ${icon} GitHub Actions Bot`,
-                "",
-                `**Workflow:** ${run.name}`,
-                `**Status:** \`${run.conclusion}\``,
-                `**Branch:** \`${run.head_branch || "unknown"}\``,
-                `**Commit:** \`${run.head_sha.substring(0, 7)}\``,
-                "",
-                `[View workflow run](${run.html_url})`,
-                "",
-                "---",
-                "🤖 Automated status update from **KOMORAPY_V4 CI Bot**."
-              ].join("\n");
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  per_page: 100
+                }
+              );
+
+              if (comments.some(comment => comment.body?.includes(marker))) {
+                console.log(`Comment already exists on PR #${pr.number}`);
+                continue;
+              }
 
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -71,4 +103,6 @@ jobs:
                 issue_number: pr.number,
                 body
               });
+
+              console.log(`Commented on PR #${pr.number}`);
             }
