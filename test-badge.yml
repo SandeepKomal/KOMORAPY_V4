@@ -37,17 +37,27 @@ jobs:
           set -o pipefail
           pytest -q 2>&1 | tee test_output.txt
           COUNT=$(grep -oE '[0-9]+ passed' test_output.txt | grep -oE '[0-9]+' | tail -1)
+          COVERAGE=$(coverage report --format=total | tr -d '%' | tr -d ' ')
           echo "count=${COUNT:-0}" >> "$GITHUB_OUTPUT"
+          echo "coverage=${COVERAGE:-0}" >> "$GITHUB_OUTPUT"
 
-      - name: Update the badge line in README.md
+      - name: Update test and coverage badges in README.md
         run: |
           COUNT="${{ steps.tests.outputs.count }}"
-          NEW_LINE="<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-${COUNT}%20passing-brightgreen)<!-- /tests-badge -->"
+          COVERAGE="${{ steps.tests.outputs.coverage }}"
+          TEST_LINE="<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-${COUNT}%20passing-brightgreen)<!-- /tests-badge -->"
+          COVERAGE_LINE="<!-- coverage-badge -->![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}%25-brightgreen)<!-- /coverage-badge -->"
 
           if grep -q '<!-- tests-badge -->' README.md; then
-            sed -i "s|<!-- tests-badge -->.*<!-- /tests-badge -->|${NEW_LINE}|" README.md
+            sed -i "s|<!-- tests-badge -->.*<!-- /tests-badge -->|${TEST_LINE}|" README.md
           else
-            sed -i "1i ${NEW_LINE}\n" README.md
+            sed -i "1i ${TEST_LINE}\n" README.md
+          fi
+
+          if grep -q '<!-- coverage-badge -->' README.md; then
+            sed -i "s|<!-- coverage-badge -->.*<!-- /coverage-badge -->|${COVERAGE_LINE}|" README.md
+          else
+            sed -i "1i ${COVERAGE_LINE}\n" README.md
           fi
 
       - name: Check whether anything actually changed
@@ -64,14 +74,12 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "docs: update test count badge (${{ steps.tests.outputs.count }} passing)"
+          commit-message: "docs: update test and coverage badges (${{ steps.tests.outputs.count }} tests, ${{ steps.tests.outputs.coverage }}% coverage)"
           branch: update-test-badge
           delete-branch: true
-          title: "📊 Update test count badge (${{ steps.tests.outputs.count }} tests passing)"
+          title: "📊 Update test and coverage badges"
           body: |
-            Automatically updates the test count badge in README.md to reflect
-            the current number of passing tests, after the latest successful
-            build on main.
+            Automatically updates README.md with the latest passing test count and total test coverage after the latest successful build on main.
           labels: |
             automated
             documentation
