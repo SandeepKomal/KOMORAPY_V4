@@ -21,7 +21,22 @@ jobs:
       - name: Pin any mutable action references to their current commit SHA
         run: |
           npm install -g pin-github-action
-          pin-github-action .github/workflows/
+
+          set +e
+          output=$(pin-github-action .github/workflows/ 2>&1)
+          status=$?
+          echo "$output"
+          set -e
+
+          if [ $status -ne 0 ]; then
+            if echo "$output" | grep -qi "No Actions detected"; then
+              echo "Nothing to pin — all actions already pinned (or none found). Continuing."
+              exit 0
+            else
+              echo "pin-github-action failed for a reason other than 'no actions found'."
+              exit "$status"
+            fi
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
