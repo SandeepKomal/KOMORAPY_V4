@@ -1,0 +1,156 @@
+name: Deploy to kind on EC2
+
+on:
+  workflow_run:
+    workflows: ["Build, Scan, and Push to ECR"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "ECR image tag to deploy (leave empty to use the latest successful CI run)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-kind
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy KOMORA to kind
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: komora
+      NAMESPACE: komora
+      DEPLOYMENT: komora
+      CONTAINER: komora
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.run_number }}
+
+    steps:
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+
+          test -n "${AWS_REGION}" || { echo "::error::Repository variable AWS_REGION is not configured."; exit 1; }
+          test -n "${EC2_HOST}" || { echo "::error::Repository secret EC2_HOST is not configured."; exit 1; }
+          test -n "${EC2_USER}" || { echo "::error::Repository secret EC2_USER is not configured."; exit 1; }
+          test -n "${{ secrets.EC2_SSH_PRIVATE_KEY }}" || { echo "::error::Repository secret EC2_SSH_PRIVATE_KEY is not configured."; exit 1; }
+
+          echo "Deploying ECR image tag: ${IMAGE_TAG}"
+
+      - name: Deploy image to kind cluster on EC2
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ECR_REPOSITORY: komora
+          NAMESPACE: komora
+          DEPLOYMENT: komora
+          CONTAINER: komora
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG
+          command_timeout: 10m
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            echo "==> Checking EC2 deployment prerequisites"
+            command -v docker >/dev/null
+            command -v kubectl >/dev/null
+            command -v kind >/dev/null
+            command -v aws >/dev/null
+
+            kind get clusters | grep -qx kind
+            kubectl config use-context kind-kind >/dev/null
+
+            echo "==> Verifying Kubernetes cluster"
+            kubectl cluster-info >/dev/null
+            kubectl get namespace "$NAMESPACE" >/dev/null
+            kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" >/dev/null
+
+            echo "==> Logging in to Amazon ECR"
+            ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+            ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+            aws ecr get-login-password --region "$AWS_REGION" |
+              docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+            IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+            echo "==> Verifying ECR image exists"
+            aws ecr describe-images               --repository-name "$ECR_REPOSITORY"               --image-ids imageTag="$IMAGE_TAG"               --region "$AWS_REGION" >/dev/null
+
+            echo "==> Pulling exact CI image"
+            docker pull "$IMAGE"
+
+            echo "==> Loading image into kind"
+            kind load docker-image "$IMAGE" --name kind
+
+            echo "==> Updating Kubernetes deployment"
+            kubectl -n "$NAMESPACE" set image               deployment/"$DEPLOYMENT"               "$CONTAINER=$IMAGE"
+
+            echo "==> Waiting for rollout"
+            kubectl -n "$NAMESPACE" rollout status               deployment/"$DEPLOYMENT"               --timeout=5m
+
+            echo "==> Verifying deployment"
+            kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" -o wide
+            kubectl -n "$NAMESPACE" get pods -l app="$DEPLOYMENT" -o wide
+
+            echo "==> Kubernetes service"
+            kubectl -n "$NAMESPACE" get service "$DEPLOYMENT" -o wide
+
+            echo "==> Running in-cluster smoke test"
+            kubectl -n "$NAMESPACE" run komora-smoke-${IMAGE_TAG}               --rm               --restart=Never               --image=curlimages/curl:8.10.1               --command --               curl --fail --silent --show-error               --max-time 15               "http://$DEPLOYMENT.$NAMESPACE.svc.cluster.local:8080/" >/tmp/komora-smoke.out
+
+            cat /tmp/komora-smoke.out || true
+
+            echo "==> Deployment completed"
+            echo "IMAGE=$IMAGE"
+            echo "NAMESPACE=$NAMESPACE"
+            echo "DEPLOYMENT=$DEPLOYMENT"
+            echo "SERVICE=$DEPLOYMENT.$NAMESPACE.svc.cluster.local:8080"
+
+      - name: Publish deployment summary
+        run: |
+          {
+            echo "## 🚀 KOMORA deployment"
+            echo
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| Environment | kind on EC2 |"
+            echo "| ECR repository | \`$ECR_REPOSITORY\` |"
+            echo "| Image tag | \`$IMAGE_TAG\` |"
+            echo "| Namespace | \`$NAMESPACE\` |"
+            echo "| Deployment | \`$DEPLOYMENT\` |"
+            echo "| EC2 host | \`$EC2_HOST\` |"
+            echo
+            echo "### Browser endpoint"
+            echo
+            echo "http://$EC2_HOST:8080/"
+            echo
+            echo "> The Kubernetes rollout and in-cluster smoke test passed. Browser access requires the EC2 host port to be mapped into kind and allowed by the EC2 security group. If the endpoint is not reachable yet, configure kind \`extraPortMappings\` for the application port."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: External browser smoke test
+        if: ${{ vars.APP_PUBLIC_URL != '' }}
+        continue-on-error: true
+        run: |
+          echo "Testing configured public URL: ${{ vars.APP_PUBLIC_URL }}"
+          curl --fail --silent --show-error --location             --max-time 20             "${{ vars.APP_PUBLIC_URL }}/" >/dev/null
+          echo "Public endpoint responded successfully."
