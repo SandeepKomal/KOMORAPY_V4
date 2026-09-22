@@ -51,7 +51,7 @@ jobs:
           echo "Deploying ECR image tag: ${IMAGE_TAG}"
 
       - name: Deploy image to kind cluster on EC2
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.5
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
