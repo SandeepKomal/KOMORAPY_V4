@@ -1,5 +1,9 @@
-<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-117%20passing-brightgreen)<!-- /tests-badge -->
-<!-- coverage-badge -->![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)<!-- /coverage-badge -->
+<!-- quality-badges:start -->
+<p>
+  <img src="https://img.shields.io/badge/tests-117%20passing-brightgreen.svg" alt="Tests: 117 passing">
+  <img src="https://img.shields.io/badge/coverage-84%25-brightgreen.svg" alt="Coverage: 84%">
+</p>
+<!-- quality-badges:end -->
 
 ## USER INTERFACE
 ### KOMORA the ecommerce app
