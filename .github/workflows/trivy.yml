@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -31,7 +31,7 @@ jobs:
           exit-code: 0   # report findings without failing the build — same "informational" stance as the Snyk gate
 
       - name: Also generate a SARIF report for the Security tab
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -41,7 +41,7 @@ jobs:
           exit-code: 0
 
       - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-results.sarif
@@ -57,14 +57,14 @@ jobs:
           echo "Full results are in the attached JSON artifact, and on the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning)." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Trivy report as build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-report
           path: trivy-results.json
           retention-days: 90
 
       - name: Email Trivy report to code owners
-        uses: dawidd6/action-send-mail@v21
+        uses: dawidd6/action-send-mail@v22
         with:
           server_address: smtp.gmail.com
           server_port: 465
