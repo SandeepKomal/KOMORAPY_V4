@@ -45,24 +45,35 @@ jobs:
           echo "coverage=${COVERAGE:-0}" >> "$GITHUB_OUTPUT"
 
       - name: Update test and coverage badges in README.md
+        env:
+          COUNT: ${{ steps.tests.outputs.count }}
+          COVERAGE: ${{ steps.tests.outputs.coverage }}
         run: |
-          COUNT="${{ steps.tests.outputs.count }}"
-          COVERAGE="${{ steps.tests.outputs.coverage }}"
-          TEST_LINE="<!-- tests-badge -->![Tests](https://img.shields.io/badge/tests-${COUNT}%20passing-brightgreen)<!-- /tests-badge -->"
-          COVERAGE_LINE="<!-- coverage-badge -->![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}%25-brightgreen)<!-- /coverage-badge -->"
+          python - <<'PY'
+          import os
+          from pathlib import Path
 
-          if grep -q '<!-- tests-badge -->' README.md; then
-            sed -i "s|<!-- tests-badge -->.*<!-- /tests-badge -->|${TEST_LINE}|" README.md
-          else
-            sed -i "1i ${TEST_LINE}\n" README.md
-          fi
+          readme = Path("README.md")
+          text = readme.read_text()
+          start = "<!-- quality-badges:start -->"
+          end = "<!-- quality-badges:end -->"
 
-          if grep -q '<!-- coverage-badge -->' README.md; then
-            sed -i "s|<!-- coverage-badge -->.*<!-- /coverage-badge -->|${COVERAGE_LINE}|" README.md
-          else
-            sed -i "1i ${COVERAGE_LINE}\n" README.md
-          fi
+          block = f"""<!-- quality-badges:start -->
+          <p>
+            <img src="https://img.shields.io/badge/tests-{os.environ["COUNT"]}%20passing-brightgreen.svg" alt="Tests: {os.environ["COUNT"]} passing">
+            <img src="https://img.shields.io/badge/coverage-{os.environ["COVERAGE"]}%25-brightgreen.svg" alt="Coverage: {os.environ["COVERAGE"]}%">
+          </p>
+          <!-- quality-badges:end -->"""
 
+          if start in text and end in text:
+              before = text.split(start, 1)[0]
+              after = text.split(end, 1)[1]
+              text = before + block + after
+          else:
+              text = block + "\n\n" + text
+
+          readme.write_text(text)
+          PY
       - name: Check whether anything actually changed
         id: check
         run: |
