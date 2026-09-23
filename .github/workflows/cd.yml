@@ -10,9 +10,14 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "ECR image tag to deploy (leave empty to use the latest successful CI run)"
+        description: "ECR image tag to deploy"
         required: false
         type: string
+      run_dast:
+        description: "Run OWASP ZAP DAST after deployment?"
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: deploy-kind
@@ -20,7 +25,10 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy KOMORA to kind
+    name: DEPLOY
+    outputs:
+      image_tag: ${{ steps.resolve_tag.outputs.tag }}
+      app_url: ${{ steps.app_url.outputs.url }}
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           github.event.workflow_run.conclusion == 'success' }}
@@ -36,9 +44,29 @@ jobs:
       CONTAINER: komora
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_USER: ${{ secrets.EC2_USER }}
-      IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.run_number }}
+      IMAGE_TAG: ${{ steps.resolve_tag.outputs.tag }}
 
     steps:
+      - name: Resolve ECR image tag
+        id: resolve_tag
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+          WORKFLOW_RUN_TAG: ${{ github.event.workflow_run.run_number }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [ -n "$WORKFLOW_RUN_TAG" ]; then
+            TAG="$WORKFLOW_RUN_TAG"
+          else
+            echo "::error::No ECR image tag could be resolved."
+            exit 1
+          fi
+
+          echo "Resolved ECR image tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Validate deployment configuration
         run: |
           set -euo pipefail
@@ -126,7 +154,24 @@ jobs:
             echo "DEPLOYMENT=$DEPLOYMENT"
             echo "SERVICE=$DEPLOYMENT.$NAMESPACE.svc.cluster.local:8080"
 
+      - name: Resolve application endpoint
+        id: app_url
+        run: |
+          set -euo pipefail
+
+          if [ -n "${{ vars.APP_PUBLIC_URL }}" ]; then
+            URL="${{ vars.APP_PUBLIC_URL }}"
+          else
+            URL="http://$EC2_HOST:8080"
+          fi
+
+          echo "Application endpoint: $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
       - name: Publish deployment summary
+        env:
+          IMAGE_TAG: ${{ steps.resolve_tag.outputs.tag }}
+          APP_URL: ${{ steps.app_url.outputs.url }}
         run: |
           {
             echo "## 🚀 KOMORA deployment"
@@ -154,3 +199,91 @@ jobs:
           echo "Testing configured public URL: ${{ vars.APP_PUBLIC_URL }}"
           curl --fail --silent --show-error --location             --max-time 20             "${{ vars.APP_PUBLIC_URL }}/" >/dev/null
           echo "Public endpoint responded successfully."
+
+  dast:
+    name: DAST
+    needs: [deploy]
+    if: >-
+      ${{ always() &&
+          needs.deploy.result == 'success' &&
+          (github.event_name != 'workflow_dispatch' || inputs.run_dast == true) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Run OWASP ZAP against deployed KOMORA
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            echo "==> Starting temporary Kubernetes port-forward"
+            kubectl config use-context kind-kind >/dev/null
+            kubectl -n komora port-forward service/komora 18080:8080 >/tmp/komora-port-forward.log 2>&1 &
+            PF_PID=$!
+            trap 'kill "$PF_PID" 2>/dev/null || true' EXIT
+
+            for i in $(seq 1 20); do
+              if curl --silent --fail --max-time 2 http://127.0.0.1:18080/ >/dev/null; then
+                break
+              fi
+              sleep 1
+            done
+
+            curl --silent --fail --max-time 5 http://127.0.0.1:18080/ >/dev/null
+
+            echo "==> Running OWASP ZAP baseline scan"
+            mkdir -p /tmp/komora-zap
+            docker run --rm \
+              --network host \
+              -v /tmp/komora-zap:/zap/wrk/:rw \
+              ghcr.io/zaproxy/zaproxy:stable \
+              zap-baseline.py \
+              -t http://127.0.0.1:18080/ \
+              -r komora-zap.html \
+              -J komora-zap.json \
+              -m 2
+
+            echo "==> DAST completed successfully"
+            echo "ZAP report: /tmp/komora-zap/komora-zap.html"
+
+      - name: Download ZAP reports from EC2
+        if: always()
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "/tmp/komora-zap/*"
+          target: "./dast-reports"
+          strip_components: 2
+
+      - name: DAST summary
+        if: always()
+        run: |
+          {
+            echo "## 🛡️ DAST — OWASP ZAP"
+            echo
+            echo "**Target:** deployed KOMORA on kind/Kubernetes via EC2"
+            echo
+            echo "**Scanner:** OWASP ZAP baseline/passive scan"
+            echo
+            echo "**Dependency:** DAST starts only after \`DEPLOY\` succeeds (\`needs: [deploy]\`)."
+            echo
+            echo "Reports are available in the workflow artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload DAST reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: komora-dast-reports
+          path: dast-reports/
+          if-no-files-found: warn
+          retention-days: 30
