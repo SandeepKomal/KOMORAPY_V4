@@ -44,8 +44,6 @@ jobs:
       CONTAINER: komora
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_USER: ${{ secrets.EC2_USER }}
-      IMAGE_TAG: ${{ steps.resolve_tag.outputs.tag }}
-
     steps:
       - name: Resolve ECR image tag
         id: resolve_tag
@@ -68,6 +66,8 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Validate deployment configuration
+        env:
+          IMAGE_TAG: ${{ steps.resolve_tag.outputs.tag }}
         run: |
           set -euo pipefail
 
@@ -88,7 +88,7 @@ jobs:
           NAMESPACE: komora
           DEPLOYMENT: komora
           CONTAINER: komora
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          IMAGE_TAG: ${{ steps.resolve_tag.outputs.tag }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
