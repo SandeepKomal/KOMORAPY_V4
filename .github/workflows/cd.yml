@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy KOMORA to kind
+    name: DEPLOY
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           github.event.workflow_run.conclusion == 'success' }}
@@ -154,3 +154,66 @@ jobs:
           echo "Testing configured public URL: ${{ vars.APP_PUBLIC_URL }}"
           curl --fail --silent --show-error --location             --max-time 20             "${{ vars.APP_PUBLIC_URL }}/" >/dev/null
           echo "Public endpoint responded successfully."
+
+  dast:
+    name: DAST
+    needs: deploy
+    if: ${{ needs.deploy.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Run OWASP ZAP against deployed KOMORA
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            echo "==> Starting temporary Kubernetes port-forward"
+            kubectl config use-context kind-kind >/dev/null
+            kubectl -n komora port-forward service/komora 18080:8080 >/tmp/komora-port-forward.log 2>&1 &
+            PF_PID=$!
+            trap 'kill "$PF_PID" 2>/dev/null || true' EXIT
+
+            for i in $(seq 1 20); do
+              if curl --silent --fail --max-time 2 http://127.0.0.1:18080/ >/dev/null; then
+                break
+              fi
+              sleep 1
+            done
+
+            curl --silent --fail --max-time 5 http://127.0.0.1:18080/ >/dev/null
+
+            echo "==> Running OWASP ZAP baseline scan"
+            mkdir -p /tmp/komora-zap
+            docker run --rm \
+              --network host \
+              -v /tmp/komora-zap:/zap/wrk/:rw \
+              ghcr.io/zaproxy/zaproxy:stable \
+              zap-baseline.py \
+              -t http://127.0.0.1:18080/ \
+              -r komora-zap.html \
+              -J komora-zap.json \
+              -m 2
+
+            echo "==> DAST completed successfully"
+            echo "ZAP report: /tmp/komora-zap/komora-zap.html"
+
+      - name: DAST summary
+        if: always()
+        run: |
+          {
+            echo "## 🛡️ DAST"
+            echo
+            echo "**Target:** deployed KOMORA on kind/Kubernetes via EC2"
+            echo
+            echo "**Scanner:** OWASP ZAP baseline scan"
+            echo
+            echo "**Dependency:** DAST runs only after the DEPLOY job succeeds (needs: deploy)."
+          } >> "$GITHUB_STEP_SUMMARY"
