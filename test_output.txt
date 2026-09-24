@@ -3,7 +3,7 @@ platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
 rootdir: /home/runner/work/KOMORAPY_V4/KOMORAPY_V4
 configfile: pytest.ini
 testpaths: tests
-plugins: cov-7.1.0, mock-3.15.1
+plugins: mock-3.15.1, cov-7.1.0
 collected 117 items
 
 tests/test_admin.py ...........................                          [ 23%]
@@ -33,4 +33,4 @@ app/helpers.py                   124      3    98%   21, 144, 229
 TOTAL                            767    119    84%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
-============================= 117 passed in 10.55s =============================
+============================= 117 passed in 10.06s =============================
