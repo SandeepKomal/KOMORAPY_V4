@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Kubernetes generated secrets
+k8s/*.secret.yaml
+k8s/secret*.yaml
