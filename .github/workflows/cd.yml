@@ -72,7 +72,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           envs: AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG
           command_timeout: 15m
-          script_stop: true
           script: |
             set -euo pipefail
 
@@ -170,7 +169,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           command_timeout: 15m
-          script_stop: true
           script: |
             set -euo pipefail
             kubectl config use-context kind-kind >/dev/null
