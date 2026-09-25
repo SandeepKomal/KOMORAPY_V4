@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: komora
+  labels:
+    app.kubernetes.io/name: komorapy
+    app.kubernetes.io/part-of: komora
