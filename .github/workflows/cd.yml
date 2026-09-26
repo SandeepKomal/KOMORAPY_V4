@@ -143,9 +143,6 @@ jobs:
 
             echo "==> Verifying exact image inside kind containerd"
             docker exec kind-control-plane \
-              ctr --namespace=k8s.io images inspect "$IMAGE" >/dev/null
-
-            docker exec kind-control-plane \
               ctr --namespace=k8s.io images ls | grep -F "$IMAGE"
 
             echo "==> Updating Kubernetes deployment"
