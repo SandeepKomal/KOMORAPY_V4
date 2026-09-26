@@ -125,7 +125,8 @@ jobs:
             IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             aws ecr describe-images --repository-name "$ECR_REPOSITORY"               --image-ids imageTag="$IMAGE_TAG" --region "$AWS_REGION" >/dev/null
             docker pull "$IMAGE"
-            kind load docker-image "$IMAGE" --name kind
+            echo "==> Loading image into kind via docker save/import"
+            docker save "$IMAGE" | docker exec -i kind-control-plane ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -
 
             kubectl -n "$NAMESPACE" set image               deployment/"$DEPLOYMENT" "$CONTAINER=$IMAGE"
             kubectl -n "$NAMESPACE" rollout status               deployment/"$DEPLOYMENT" --timeout=5m
