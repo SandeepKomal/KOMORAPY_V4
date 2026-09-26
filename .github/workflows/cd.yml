@@ -217,12 +217,19 @@ jobs:
               curl --silent --fail --max-time 2 http://127.0.0.1:18080/ >/dev/null && break
               sleep 1
             done
+            rm -rf /tmp/komorapy-zap
             mkdir -p /tmp/komorapy-zap
             docker run --rm --network host \
               -v /tmp/komorapy-zap:/zap/wrk/:rw \
               ghcr.io/zaproxy/zaproxy:stable \
               zap-baseline.py -t http://127.0.0.1:18080/ \
-              -r komorapy-zap.html -J komorapy-zap.json -m 2
+              -r /zap/wrk/komorapy-zap.html \
+              -J /zap/wrk/komorapy-zap.json \
+              -m 2
+
+            mkdir -p "$HOME/dast-reports"
+            cp /tmp/komorapy-zap/komorapy-zap.html "$HOME/dast-reports/"
+            cp /tmp/komorapy-zap/komorapy-zap.json "$HOME/dast-reports/"
 
       - name: Download ZAP reports
         if: always()
@@ -231,9 +238,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          source: "/tmp/komorapy-zap/*"
+          command_timeout: 5m
+          source: "dast-reports/*"
           target: "./dast-reports"
-          strip_components: 2
+          strip_components: 1
 
       - name: Upload DAST reports
         if: always()
