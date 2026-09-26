@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-09-26 17:58 UTC
+Last updated: 2026-09-26 18:02 UTC
 
 ## Trigger
 
@@ -11,13 +11,14 @@ Last updated: 2026-09-26 17:58 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: OK success
 - Branch: main
-- Commit: e1840e4
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260840486
+- Commit: 36d8f30
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261090511
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | OK success | 36d8f30 | 2026-09-26 18:02 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261090511 |
 | Build, Scan, and Push to ECR | OK success | e1840e4 | 2026-09-26 17:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260840486 |
 | Build, Scan, and Push to ECR | FAILED failure | a0c64c0 | 2026-09-26 17:54 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260672323 |
 | Build, Scan, and Push to ECR | FAILED failure | fd5f69f | 2026-09-26 17:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260430564 |
@@ -25,12 +26,11 @@ Last updated: 2026-09-26 17:58 UTC
 | Build, Scan, and Push to ECR | OK success | d3c785a | 2026-09-26 17:25 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36258915129 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 3a4def6 | 2026-09-26 14:04 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36247270706 |
 | Build, Scan, and Push to ECR | OK success | 3a4def6 | 2026-09-26 14:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36247142972 |
-| Build, Scan, and Push to ECR | SKIPPED skipped | ddedf1c | 2026-09-26 12:44 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36242865215 |
 
 ## Summary
 
 - Workflow runs shown: 8
-- Successful runs: 4
+- Successful runs: 5
 - Failed runs: 3
 
 ## Bot Responsibilities
