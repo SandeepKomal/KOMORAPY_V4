@@ -125,10 +125,10 @@ jobs:
             IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
             aws ecr describe-images --repository-name "$ECR_REPOSITORY"               --image-ids imageTag="$IMAGE_TAG" --region "$AWS_REGION" >/dev/null
             docker pull "$IMAGE"
-            echo "==> Loading linux/amd64 image into kind"
+            echo "==> Loading exact ECR image into kind"
             TMP_IMAGE="/tmp/komorapy-$IMAGE_TAG.tar"
             rm -f "$TMP_IMAGE"
-            docker image save --platform linux/amd64 --output "$TMP_IMAGE" "$IMAGE"
+            docker image save --output "$TMP_IMAGE" "$IMAGE"
             kind load image-archive "$TMP_IMAGE" --name kind
             rm -f "$TMP_IMAGE"
 
