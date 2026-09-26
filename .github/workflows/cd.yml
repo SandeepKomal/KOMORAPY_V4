@@ -24,19 +24,19 @@ jobs:
     permissions:
       contents: read
     env:
-      AWS_REGION: \${{ vars.AWS_REGION }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REPOSITORY: komora
       NAMESPACE: komora
       DEPLOYMENT: komorapy
       CONTAINER: komorapy
-      EC2_HOST: \${{ secrets.EC2_HOST }}
-      EC2_USER: \${{ secrets.EC2_USER }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
 
     steps:
       - name: Resolve image tag
         id: tag
         env:
-          INPUT_TAG: \${{ inputs.image_tag }}
+          INPUT_TAG: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
           test -n "$INPUT_TAG" || { echo "::error::No ECR image tag."; exit 1; }
@@ -48,21 +48,21 @@ jobs:
           test -n "$AWS_REGION"
           test -n "$EC2_HOST"
           test -n "$EC2_USER"
-          test -n "\${{ secrets.EC2_SSH_PRIVATE_KEY }}"
+          test -n "${{ secrets.EC2_SSH_PRIVATE_KEY }}"
 
       - name: Deploy to EC2 kind
         uses: appleboy/ssh-action@v1.2.5
         env:
-          AWS_REGION: \${{ vars.AWS_REGION }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
           ECR_REPOSITORY: komora
           NAMESPACE: komora
           DEPLOYMENT: komorapy
           CONTAINER: komorapy
-          IMAGE_TAG: \${{ steps.tag.outputs.tag }}
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
         with:
-          host: \${{ secrets.EC2_HOST }}
-          username: \${{ secrets.EC2_USER }}
-          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           envs: AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG
           command_timeout: 15m
           script: |
@@ -174,7 +174,7 @@ jobs:
 
       - name: Deployment summary
         env:
-          IMAGE_TAG: \${{ steps.tag.outputs.tag }}
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
           {
             echo "## KOMORAPY deployment"
@@ -192,15 +192,15 @@ jobs:
   dast:
     name: OWASP ZAP DAST
     needs: deploy
-    if: \${{ needs.deploy.result == 'success' && inputs.run_dast == true }}
+    if: ${{ needs.deploy.result == 'success' && inputs.run_dast == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Run ZAP
         uses: appleboy/ssh-action@v1.2.5
         with:
-          host: \${{ secrets.EC2_HOST }}
-          username: \${{ secrets.EC2_USER }}
-          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           command_timeout: 15m
           script: |
             set -euo pipefail
@@ -223,9 +223,9 @@ jobs:
         if: always()
         uses: appleboy/scp-action@v1.0.0
         with:
-          host: \${{ secrets.EC2_HOST }}
-          username: \${{ secrets.EC2_USER }}
-          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "/tmp/komorapy-zap/*"
           target: "./dast-reports"
           strip_components: 2
