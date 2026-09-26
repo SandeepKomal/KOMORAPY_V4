@@ -236,13 +236,18 @@ jobs:
             test -s "$HOME/dast-reports/komorapy-zap.json"
 
             echo "ZAP baseline exit code: $ZAP_EXIT"
-            if [ "$ZAP_EXIT" -gt 1 ]; then
-              echo "::error::OWASP ZAP execution failed (exit code $ZAP_EXIT)."
-              exit "$ZAP_EXIT"
+            if [ "$ZAP_EXIT" -eq 1 ]; then
+              echo "::error::OWASP ZAP reported one or more FAIL findings."
+              exit 1
             fi
 
-            if [ "$ZAP_EXIT" -eq 1 ]; then
-              echo "::warning::OWASP ZAP reported one or more warnings; reports were generated successfully."
+            if [ "$ZAP_EXIT" -eq 2 ]; then
+              echo "::warning::OWASP ZAP reported warnings only; reports were generated successfully."
+            fi
+
+            if [ "$ZAP_EXIT" -ge 3 ]; then
+              echo "::error::OWASP ZAP execution failed (exit code $ZAP_EXIT)."
+              exit "$ZAP_EXIT"
             fi
 
       - name: Download ZAP reports from EC2
