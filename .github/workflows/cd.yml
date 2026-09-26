@@ -155,12 +155,20 @@ jobs:
               --timeout=5m
 
             echo "==> In-cluster smoke test"
-            kubectl -n "$NAMESPACE" run "komorapy-smoke-$IMAGE_TAG" \
-              --rm --restart=Never \
+            SMOKE_POD="komorapy-smoke-$IMAGE_TAG"
+            kubectl -n "$NAMESPACE" delete pod "$SMOKE_POD" --ignore-not-found >/dev/null 2>&1 || true
+
+            kubectl -n "$NAMESPACE" run "$SMOKE_POD" \
+              --restart=Never \
               --image=curlimages/curl:8.10.1 \
               --command -- curl --fail --silent --show-error \
               --max-time 15 \
               http://komorapy.komora.svc.cluster.local:8080/
+
+            kubectl -n "$NAMESPACE" wait --for=condition=Ready pod/"$SMOKE_POD" --timeout=60s || true
+            kubectl -n "$NAMESPACE" wait --for=jsonpath='{.status.phase}'=Succeeded pod/"$SMOKE_POD" --timeout=60s
+            kubectl -n "$NAMESPACE" logs "$SMOKE_POD"
+            kubectl -n "$NAMESPACE" delete pod "$SMOKE_POD" --ignore-not-found
 
             echo "==> EC2 host smoke test"
             curl --fail --silent --show-error --max-time 20 \
