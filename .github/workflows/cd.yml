@@ -225,8 +225,8 @@ jobs:
               -v "$HOME/dast-reports:/zap/wrk:rw" \
               ghcr.io/zaproxy/zaproxy:stable \
               zap-baseline.py -t http://127.0.0.1:18080/ \
-              -r /zap/wrk/komorapy-zap.html \
-              -J /zap/wrk/komorapy-zap.json \
+              -r komorapy-zap.html \
+              -J komorapy-zap.json \
               -m 2
 
             test -s "$HOME/dast-reports/komorapy-zap.html"
@@ -240,9 +240,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           command_timeout: 5m
-          source: "/home/ubuntu/dast-reports/*"
+          source: "dast-reports/*"
           target: "./dast-reports"
-          strip_components: 2
+          strip_components: 1
 
       - name: Upload DAST reports
         if: always()
