@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-09-26 08:47 UTC
+Last updated: 2026-09-26 09:41 UTC
 
 ## Trigger
 
-- Event: `schedule`
-- Workflow: Manual / Scheduled health check
-- Result: INFO not applicable
+- Event: `workflow_run`
+- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Result: OK success
 - Branch: main
-- Commit: n/a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions
+- Commit: 5de1570
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36233534419
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Auto-format (scheduled PR, Dependabot-style) | OK success | 5de1570 | 2026-09-26 09:41 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36233534419 |
 | Build, Scan, and Push to ECR | OK success | 5de1570 | 2026-09-26 06:47 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36224767649 |
 | Build | OK success | 5de1570 | 2026-09-26 06:46 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36224707702 |
 | gitleaks | OK success | 5de1570 | 2026-09-26 06:44 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36224634995 |
@@ -31,8 +32,8 @@ Last updated: 2026-09-26 08:47 UTC
 
 ## Summary
 
-- Workflow runs shown: 10
-- Successful runs: 10
+- Workflow runs shown: 11
+- Successful runs: 11
 - Failed runs: 0
 
 ## Bot Responsibilities
