@@ -126,11 +126,17 @@ jobs:
             aws ecr describe-images --repository-name "$ECR_REPOSITORY"               --image-ids imageTag="$IMAGE_TAG" --region "$AWS_REGION" >/dev/null
             docker pull "$IMAGE"
             echo "==> Loading exact ECR image into kind"
-            TMP_IMAGE="/tmp/komorapy-$IMAGE_TAG.tar"
-            rm -f "$TMP_IMAGE"
-            docker image save --output "$TMP_IMAGE" "$IMAGE"
-            kind load image-archive "$TMP_IMAGE" --name kind
-            rm -f "$TMP_IMAGE"
+            echo "==> Using docker containerd image store compatibility path"
+            docker image inspect "$IMAGE" >/dev/null
+
+            IMAGE_ID="$(docker image inspect --format '{{.Id}}' "$IMAGE")"
+            if docker exec kind-control-plane ctr --namespace=k8s.io images ls --quiet | grep -q "komora"; then
+              docker exec kind-control-plane ctr --namespace=k8s.io images rm "$IMAGE" >/dev/null 2>&1 || true
+            fi
+
+            docker image save "$IMAGE" |               docker exec --privileged -i kind-control-plane               ctr --namespace=k8s.io images import --snapshotter=overlayfs -               2>&1 | tee /tmp/komorapy-kind-import.log
+
+            docker exec kind-control-plane ctr --namespace=k8s.io images inspect "$IMAGE" >/dev/null
 
             kubectl -n "$NAMESPACE" set image               deployment/"$DEPLOYMENT" "$CONTAINER=$IMAGE"
             kubectl -n "$NAMESPACE" rollout status               deployment/"$DEPLOYMENT" --timeout=5m
