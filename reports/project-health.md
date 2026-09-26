@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-09-26 17:54 UTC
+Last updated: 2026-09-26 17:58 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
 - Workflow: Build, Scan, and Push to ECR
-- Result: FAILED failure
+- Result: OK success
 - Branch: main
-- Commit: a0c64c0
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260672323
+- Commit: e1840e4
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260840486
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | OK success | e1840e4 | 2026-09-26 17:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260840486 |
 | Build, Scan, and Push to ECR | FAILED failure | a0c64c0 | 2026-09-26 17:54 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260672323 |
 | Build, Scan, and Push to ECR | FAILED failure | fd5f69f | 2026-09-26 17:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260430564 |
 | Build, Scan, and Push to ECR | FAILED failure | 0389a87 | 2026-09-26 17:46 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260188141 |
@@ -25,12 +26,11 @@ Last updated: 2026-09-26 17:54 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 3a4def6 | 2026-09-26 14:04 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36247270706 |
 | Build, Scan, and Push to ECR | OK success | 3a4def6 | 2026-09-26 14:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36247142972 |
 | Build, Scan, and Push to ECR | SKIPPED skipped | ddedf1c | 2026-09-26 12:44 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36242865215 |
-| Build, Scan, and Push to ECR | SKIPPED skipped | dda951d | 2026-09-26 12:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36242573246 |
 
 ## Summary
 
 - Workflow runs shown: 8
-- Successful runs: 3
+- Successful runs: 4
 - Failed runs: 3
 
 ## Bot Responsibilities
