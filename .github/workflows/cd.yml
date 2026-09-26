@@ -221,6 +221,7 @@ jobs:
             mkdir -p "$HOME/dast-reports"
             chmod 777 "$HOME/dast-reports"
 
+            set +e
             docker run --rm --network host \
               -v "$HOME/dast-reports:/zap/wrk:rw" \
               ghcr.io/zaproxy/zaproxy:stable \
@@ -228,9 +229,21 @@ jobs:
               -r komorapy-zap.html \
               -J komorapy-zap.json \
               -m 2
+            ZAP_EXIT=$?
+            set -e
 
             test -s "$HOME/dast-reports/komorapy-zap.html"
             test -s "$HOME/dast-reports/komorapy-zap.json"
+
+            echo "ZAP baseline exit code: $ZAP_EXIT"
+            if [ "$ZAP_EXIT" -gt 1 ]; then
+              echo "::error::OWASP ZAP execution failed (exit code $ZAP_EXIT)."
+              exit "$ZAP_EXIT"
+            fi
+
+            if [ "$ZAP_EXIT" -eq 1 ]; then
+              echo "::warning::OWASP ZAP reported one or more warnings; reports were generated successfully."
+            fi
 
       - name: Download ZAP reports
         if: always()
