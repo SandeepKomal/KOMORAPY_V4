@@ -221,7 +221,7 @@ jobs:
             mkdir -p "$HOME/dast-reports"
             chmod 777 "$HOME/dast-reports"
 
-            set +e
+                        set +e
             docker run --rm --network host \
               -v "$HOME/dast-reports:/zap/wrk:rw" \
               ghcr.io/zaproxy/zaproxy:stable \
@@ -245,17 +245,27 @@ jobs:
               echo "::warning::OWASP ZAP reported one or more warnings; reports were generated successfully."
             fi
 
-      - name: Download ZAP reports
-        if: always()
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          command_timeout: 5m
-          source: "dast-reports/*"
-          target: "./dast-reports"
-          strip_components: 1
+      - name: Download ZAP reports from EC2
+        if: always() && needs.deploy.result == 'success'
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p dast-reports
+          KEY_FILE="$(mktemp)"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s\n' "$EC2_SSH_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null             -i "$KEY_FILE"             "$EC2_USER@$EC2_HOST:/home/ubuntu/dast-reports/komorapy-zap.html"             dast-reports/
+
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null             -i "$KEY_FILE"             "$EC2_USER@$EC2_HOST:/home/ubuntu/dast-reports/komorapy-zap.json"             dast-reports/
+
+          test -s dast-reports/komorapy-zap.html
+          test -s dast-reports/komorapy-zap.json
+          ls -lh dast-reports
 
       - name: Upload DAST reports
         if: always()
