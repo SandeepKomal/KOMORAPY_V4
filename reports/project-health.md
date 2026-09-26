@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-09-26 18:07 UTC
+Last updated: 2026-09-26 18:16 UTC
 
 ## Trigger
 
@@ -11,26 +11,25 @@ Last updated: 2026-09-26 18:07 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: OK success
 - Branch: main
-- Commit: 3607ea3
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261347143
+- Commit: 8f20002
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261838603
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | OK success | 8f20002 | 2026-09-26 18:16 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261838603 |
 | Build, Scan, and Push to ECR | OK success | 3607ea3 | 2026-09-26 18:07 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261347143 |
 | Build, Scan, and Push to ECR | OK success | 36d8f30 | 2026-09-26 18:02 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36261090511 |
 | Build, Scan, and Push to ECR | OK success | e1840e4 | 2026-09-26 17:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260840486 |
 | Build, Scan, and Push to ECR | FAILED failure | a0c64c0 | 2026-09-26 17:54 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260672323 |
 | Build, Scan, and Push to ECR | FAILED failure | fd5f69f | 2026-09-26 17:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260430564 |
 | Build, Scan, and Push to ECR | FAILED failure | 0389a87 | 2026-09-26 17:46 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36260188141 |
-| Build, Scan, and Push to ECR | OK success | d3c785a | 2026-09-26 17:25 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36258915129 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 3a4def6 | 2026-09-26 14:04 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36247270706 |
 
 ## Summary
 
-- Workflow runs shown: 8
-- Successful runs: 5
+- Workflow runs shown: 7
+- Successful runs: 4
 - Failed runs: 3
 
 ## Bot Responsibilities
