@@ -1,12 +1,10 @@
 name: Build, Scan, and Push to ECR
 
 on:
-  workflow_run:
-    workflows: ["Build"]   # must match the `name:` field inside build.yml exactly
-    types:
-      - completed
+  push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,8 +20,6 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
