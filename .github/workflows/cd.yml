@@ -280,3 +280,25 @@ jobs:
           path: dast-reports/
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Email DAST reports
+        if: always() && needs.deploy.result == 'success' && hashFiles('dast-reports/*') != ''
+        uses: dawidd6/action-send-mail@v22
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: KOMORA CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.REPORT_RECIPIENTS }}
+          subject: "OWASP ZAP DAST Report — ${{ github.repository }} (image ${{ inputs.image_tag }})"
+          body: |
+            Automated OWASP ZAP DAST scan for KOMORAPY.
+
+            Image deployed: ${{ inputs.image_tag }}
+            Environment: kind on EC2
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            The attached HTML and JSON reports contain the complete ZAP baseline scan results.
+            The reports are also available as the "komorapy-dast-reports" GitHub Actions artifact.
+          attachments: dast-reports/komorapy-zap.html,dast-reports/komorapy-zap.json
