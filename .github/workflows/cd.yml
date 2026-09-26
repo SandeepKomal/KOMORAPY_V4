@@ -221,6 +221,14 @@ jobs:
             mkdir -p "$HOME/dast-reports"
             chmod 777 "$HOME/dast-reports"
 
+            mkdir -p /tmp/dast-report-upload
+            cp "$HOME/dast-reports/komorapy-zap.html" /tmp/dast-report-upload/
+            cp "$HOME/dast-reports/komorapy-zap.json" /tmp/dast-report-upload/
+            docker exec kind-control-plane sh -c 'true'
+
+            echo "ZAP reports saved on EC2:"
+            ls -lh "$HOME/dast-reports/"
+
             set +e
             docker run --rm --network host \
               -v "$HOME/dast-reports:/zap/wrk:rw" \
@@ -246,16 +254,11 @@ jobs:
             fi
 
       - name: Download ZAP reports
-        if: always()
-        uses: appleboy/scp-action@v1.0.0
+        if: always() && needs.deploy.result == 'success'
+        uses: actions/download-artifact@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          command_timeout: 5m
-          source: "dast-reports/*"
-          target: "./dast-reports"
-          strip_components: 1
+          name: komorapy-dast-reports
+          path: dast-reports
 
       - name: Upload DAST reports
         if: always()
