@@ -221,15 +221,7 @@ jobs:
             mkdir -p "$HOME/dast-reports"
             chmod 777 "$HOME/dast-reports"
 
-            mkdir -p /tmp/dast-report-upload
-            cp "$HOME/dast-reports/komorapy-zap.html" /tmp/dast-report-upload/
-            cp "$HOME/dast-reports/komorapy-zap.json" /tmp/dast-report-upload/
-            docker exec kind-control-plane sh -c 'true'
-
-            echo "ZAP reports saved on EC2:"
-            ls -lh "$HOME/dast-reports/"
-
-            set +e
+                        set +e
             docker run --rm --network host \
               -v "$HOME/dast-reports:/zap/wrk:rw" \
               ghcr.io/zaproxy/zaproxy:stable \
@@ -253,12 +245,27 @@ jobs:
               echo "::warning::OWASP ZAP reported one or more warnings; reports were generated successfully."
             fi
 
-      - name: Download ZAP reports
+      - name: Download ZAP reports from EC2
         if: always() && needs.deploy.result == 'success'
-        uses: actions/download-artifact@v4
-        with:
-          name: komorapy-dast-reports
-          path: dast-reports
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p dast-reports
+          KEY_FILE="$(mktemp)"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s\n' "$EC2_SSH_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null             -i "$KEY_FILE"             "$EC2_USER@$EC2_HOST:/home/ubuntu/dast-reports/komorapy-zap.html"             dast-reports/
+
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null             -i "$KEY_FILE"             "$EC2_USER@$EC2_HOST:/home/ubuntu/dast-reports/komorapy-zap.json"             dast-reports/
+
+          test -s dast-reports/komorapy-zap.html
+          test -s dast-reports/komorapy-zap.json
+          ls -lh dast-reports
 
       - name: Upload DAST reports
         if: always()
