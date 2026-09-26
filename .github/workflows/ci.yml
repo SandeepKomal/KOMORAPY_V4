@@ -15,7 +15,7 @@ jobs:
       actions: write
     env:
       ECR_REPOSITORY: komora
-      IMAGE_TAG: \${{ github.run_number }}
+      IMAGE_TAG: ${{ github.run_number }}
 
     steps:
       - name: Clone repository
@@ -24,16 +24,16 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: \${{ vars.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Export ECR registry to env
-        run: echo "ECR_REGISTRY=\${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
+        run: echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: |
@@ -42,10 +42,10 @@ jobs:
       - name: Snyk container monitor (push to dashboard)
         uses: snyk/actions/docker@master
         env:
-          SNYK_TOKEN: \${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
-          image: \${{ steps.login-ecr.outputs.registry }}/\${{ env.ECR_REPOSITORY }}:\${{ env.IMAGE_TAG }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           args: --file=Dockerfile
 
       - name: Snyk container test (fail build on High+)
@@ -53,15 +53,15 @@ jobs:
         continue-on-error: true
         uses: snyk/actions/docker@master
         env:
-          SNYK_TOKEN: \${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
-          image: \${{ steps.login-ecr.outputs.registry }}/\${{ env.ECR_REPOSITORY }}:\${{ env.IMAGE_TAG }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           args: --file=Dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload Snyk results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: ${{ always() && hashFiles('snyk.sarif') != '' }}
         with:
           sarif_file: snyk.sarif
 
@@ -79,12 +79,12 @@ jobs:
           aws ecr describe-images \
             --repository-name "$ECR_REPOSITORY" \
             --image-ids imageTag="$IMAGE_TAG" \
-            --region "\${AWS_REGION:-\${{ vars.AWS_REGION }}}" >/dev/null
+            --region "\${AWS_REGION:-${{ vars.AWS_REGION }}}" >/dev/null
           echo "Verified ECR image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Trigger CD deployment
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           gh workflow run cd.yml \
