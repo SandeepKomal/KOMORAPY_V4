@@ -33,4 +33,4 @@ app/helpers.py                   124      3    98%   21, 144, 229
 TOTAL                            767    119    84%
 Coverage HTML written to dir htmlcov
 Coverage XML written to file coverage.xml
-============================= 117 passed in 6.92s ==============================
+============================= 117 passed in 10.08s =============================
