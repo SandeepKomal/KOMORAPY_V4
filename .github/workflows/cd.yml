@@ -1,15 +1,11 @@
 name: Deploy KOMORAPY to kind on EC2
 
 on:
-  workflow_run:
-    workflows: ["Build, Scan, and Push to ECR"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       image_tag:
         description: ECR image tag to deploy
-        required: false
+        required: true
         type: string
       run_dast:
         description: Run OWASP ZAP DAST after deployment
@@ -24,30 +20,27 @@ concurrency:
 jobs:
   deploy:
     name: Deploy
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_REGION: \${{ vars.AWS_REGION }}
       ECR_REPOSITORY: komora
       NAMESPACE: komora
       DEPLOYMENT: komorapy
       CONTAINER: komorapy
-      EC2_HOST: ${{ secrets.EC2_HOST }}
-      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_HOST: \${{ secrets.EC2_HOST }}
+      EC2_USER: \${{ secrets.EC2_USER }}
 
     steps:
       - name: Resolve image tag
         id: tag
         env:
-          INPUT_TAG: ${{ inputs.image_tag }}
-          SOURCE_RUN: ${{ github.event.workflow_run.run_number }}
+          INPUT_TAG: \${{ inputs.image_tag }}
         run: |
           set -euo pipefail
-          TAG="${INPUT_TAG:-${SOURCE_RUN:-}}"
-          test -n "$TAG" || { echo "::error::No ECR image tag."; exit 1; }
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          test -n "$INPUT_TAG" || { echo "::error::No ECR image tag."; exit 1; }
+          echo "tag=$INPUT_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Validate configuration
         run: |
@@ -55,21 +48,21 @@ jobs:
           test -n "$AWS_REGION"
           test -n "$EC2_HOST"
           test -n "$EC2_USER"
-          test -n "${{ secrets.EC2_SSH_PRIVATE_KEY }}"
+          test -n "\${{ secrets.EC2_SSH_PRIVATE_KEY }}"
 
       - name: Deploy to EC2 kind
         uses: appleboy/ssh-action@v1.2.5
         env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: \${{ vars.AWS_REGION }}
           ECR_REPOSITORY: komora
           NAMESPACE: komora
           DEPLOYMENT: komorapy
           CONTAINER: komorapy
-          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+          IMAGE_TAG: \${{ steps.tag.outputs.tag }}
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: \${{ secrets.EC2_HOST }}
+          username: \${{ secrets.EC2_USER }}
+          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
           envs: AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG
           command_timeout: 15m
           script: |
@@ -86,7 +79,10 @@ jobs:
             kubectl cluster-info >/dev/null
 
             echo "==> Syncing DB credentials from AWS Secrets Manager"
-            SECRET_JSON="$(aws secretsmanager get-secret-value               --secret-id prod/komorapy/mysql               --region "$AWS_REGION"               --query SecretString --output text)"
+            SECRET_JSON="$(aws secretsmanager get-secret-value \
+              --secret-id prod/komorapy/mysql \
+              --region "$AWS_REGION" \
+              --query SecretString --output text)"
 
             printf '%s' "$SECRET_JSON" | jq -r '
               "DB_HOST=" + .host,
@@ -96,14 +92,21 @@ jobs:
             ' >/tmp/komorapy-db.env
 
             kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
-            kubectl create secret generic komorapy-db               -n "$NAMESPACE" --from-env-file=/tmp/komorapy-db.env               --dry-run=client -o yaml | kubectl apply -f -
+            kubectl create secret generic komorapy-db \
+              -n "$NAMESPACE" \
+              --from-env-file=/tmp/komorapy-db.env \
+              --dry-run=client -o yaml | kubectl apply -f -
             rm -f /tmp/komorapy-db.env
             unset SECRET_JSON
 
             echo "==> Ensuring application secret"
             if ! kubectl -n "$NAMESPACE" get secret komorapy-app >/dev/null 2>&1; then
               SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
-              kubectl create secret generic komorapy-app -n "$NAMESPACE"                 --from-literal=SECRET_KEY="$SECRET_KEY"                 --from-literal=FLASK_DEBUG=0                 --from-literal=FORCE_HTTPS_COOKIES=0                 --dry-run=client -o yaml | kubectl apply -f -
+              kubectl create secret generic komorapy-app -n "$NAMESPACE" \
+                --from-literal=SECRET_KEY="$SECRET_KEY" \
+                --from-literal=FLASK_DEBUG=0 \
+                --from-literal=FORCE_HTTPS_COOKIES=0 \
+                --dry-run=client -o yaml | kubectl apply -f -
               unset SECRET_KEY
             fi
 
@@ -116,43 +119,62 @@ jobs:
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
 
-            echo "==> Pulling exact ECR image"
+            echo "==> Pulling exact ECR image directly into kind containerd"
             ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
             ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
-            aws ecr get-login-password --region "$AWS_REGION" |
-              docker login --username AWS --password-stdin "$ECR_REGISTRY"
-
             IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-            aws ecr describe-images --repository-name "$ECR_REPOSITORY"               --image-ids imageTag="$IMAGE_TAG" --region "$AWS_REGION" >/dev/null
-            docker pull "$IMAGE"
-            echo "==> Loading exact ECR image into kind"
-            echo "==> Using docker containerd image store compatibility path"
-            docker image inspect "$IMAGE" >/dev/null
 
-            IMAGE_ID="$(docker image inspect --format '{{.Id}}' "$IMAGE")"
-            if docker exec kind-control-plane ctr --namespace=k8s.io images ls --quiet | grep -q "komora"; then
-              docker exec kind-control-plane ctr --namespace=k8s.io images rm "$IMAGE" >/dev/null 2>&1 || true
-            fi
+            aws ecr describe-images \
+              --repository-name "$ECR_REPOSITORY" \
+              --image-ids imageTag="$IMAGE_TAG" \
+              --region "$AWS_REGION" >/dev/null
 
-            docker image save "$IMAGE" |               docker exec --privileged -i kind-control-plane               ctr --namespace=k8s.io images import --snapshotter=overlayfs -               2>&1 | tee /tmp/komorapy-kind-import.log
+            ECR_PASSWORD="$(aws ecr get-login-password --region "$AWS_REGION")"
 
-            docker exec kind-control-plane ctr --namespace=k8s.io images inspect "$IMAGE" >/dev/null
+            docker exec -e ECR_PASSWORD="$ECR_PASSWORD" kind-control-plane \
+              sh -c '
+                set -eu
+                ctr --namespace=k8s.io images pull \
+                  --user "AWS:$ECR_PASSWORD" \
+                  "'"$IMAGE"'"
+              '
 
-            kubectl -n "$NAMESPACE" set image               deployment/"$DEPLOYMENT" "$CONTAINER=$IMAGE"
-            kubectl -n "$NAMESPACE" rollout status               deployment/"$DEPLOYMENT" --timeout=5m
+            unset ECR_PASSWORD
+
+            echo "==> Verifying exact image inside kind containerd"
+            docker exec kind-control-plane \
+              ctr --namespace=k8s.io images inspect "$IMAGE" >/dev/null
+
+            docker exec kind-control-plane \
+              ctr --namespace=k8s.io images ls | grep -F "$IMAGE"
+
+            echo "==> Updating Kubernetes deployment"
+            kubectl -n "$NAMESPACE" set image \
+              deployment/"$DEPLOYMENT" \
+              "$CONTAINER=$IMAGE"
+
+            kubectl -n "$NAMESPACE" rollout status \
+              deployment/"$DEPLOYMENT" \
+              --timeout=5m
 
             echo "==> In-cluster smoke test"
-            kubectl -n "$NAMESPACE" run "komorapy-smoke-$IMAGE_TAG"               --rm --restart=Never --image=curlimages/curl:8.10.1               --command -- curl --fail --silent --show-error               --max-time 15               http://komorapy.komora.svc.cluster.local:8080/
+            kubectl -n "$NAMESPACE" run "komorapy-smoke-$IMAGE_TAG" \
+              --rm --restart=Never \
+              --image=curlimages/curl:8.10.1 \
+              --command -- curl --fail --silent --show-error \
+              --max-time 15 \
+              http://komorapy.komora.svc.cluster.local:8080/
 
             echo "==> EC2 host smoke test"
-            curl --fail --silent --show-error --max-time 20               http://127.0.0.1:8080/ >/dev/null
+            curl --fail --silent --show-error --max-time 20 \
+              http://127.0.0.1:8080/ >/dev/null
 
             kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" -o wide
             kubectl -n "$NAMESPACE" get service komorapy -o wide
 
       - name: Deployment summary
         env:
-          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+          IMAGE_TAG: \${{ steps.tag.outputs.tag }}
         run: |
           {
             echo "## KOMORAPY deployment"
@@ -160,25 +182,25 @@ jobs:
             echo "| Item | Value |"
             echo "|---|---|"
             echo "| Environment | kind on EC2 |"
-            echo "| ECR tag | `$IMAGE_TAG` |"
-            echo "| Namespace | `komora` |"
-            echo "| Deployment | `komorapy` |"
-            echo "| Service | `komorapy:8080` |"
-            echo "| Browser | http://${EC2_HOST}:8080/ |"
+            echo "| ECR tag | \`$IMAGE_TAG\` |"
+            echo "| Namespace | \`komora\` |"
+            echo "| Deployment | \`komorapy\` |"
+            echo "| Service | \`komorapy:8080\` |"
+            echo "| Browser | http://$EC2_HOST:8080/ |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   dast:
     name: OWASP ZAP DAST
     needs: deploy
-    if: ${{ always() && needs.deploy.result == 'success' && (github.event_name != 'workflow_dispatch' || inputs.run_dast == true) }}
+    if: \${{ needs.deploy.result == 'success' && inputs.run_dast == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Run ZAP
         uses: appleboy/ssh-action@v1.2.5
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: \${{ secrets.EC2_HOST }}
+          username: \${{ secrets.EC2_USER }}
+          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
           command_timeout: 15m
           script: |
             set -euo pipefail
@@ -191,15 +213,19 @@ jobs:
               sleep 1
             done
             mkdir -p /tmp/komorapy-zap
-            docker run --rm --network host               -v /tmp/komorapy-zap:/zap/wrk/:rw               ghcr.io/zaproxy/zaproxy:stable               zap-baseline.py -t http://127.0.0.1:18080/               -r komorapy-zap.html -J komorapy-zap.json -m 2
+            docker run --rm --network host \
+              -v /tmp/komorapy-zap:/zap/wrk/:rw \
+              ghcr.io/zaproxy/zaproxy:stable \
+              zap-baseline.py -t http://127.0.0.1:18080/ \
+              -r komorapy-zap.html -J komorapy-zap.json -m 2
 
       - name: Download ZAP reports
         if: always()
         uses: appleboy/scp-action@v1.0.0
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: \${{ secrets.EC2_HOST }}
+          username: \${{ secrets.EC2_USER }}
+          key: \${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "/tmp/komorapy-zap/*"
           target: "./dast-reports"
           strip_components: 2
