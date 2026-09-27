@@ -365,3 +365,305 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
 .v-db-tabs a.active .n{color:var(--komora);}
 .v-table td.mono{font-family:monospace;font-size:12px;color:var(--muted);}
 
+
+/* ==========================================================================
+   KOMORA — FUTURE AUTH EXPERIENCE
+   Dedicated visual layer for customer + admin authentication.
+   No template fields, routes, or backend behavior are changed.
+   ========================================================================== */
+
+.v-auth-wrap{
+  position:relative;
+  isolation:isolate;
+  min-height:calc(100vh - 36px);
+  overflow:hidden;
+  padding:72px 20px 100px;
+}
+.v-auth-wrap::before,
+.v-auth-wrap::after{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  pointer-events:none;
+  border-radius:50%;
+  filter:blur(2px);
+}
+.v-auth-wrap::before{
+  width:520px;
+  height:520px;
+  top:-220px;
+  left:-170px;
+  background:radial-gradient(circle,rgba(214,255,63,.13),rgba(214,255,63,0) 68%);
+  animation:auth-orbit-a 12s ease-in-out infinite alternate;
+}
+.v-auth-wrap::after{
+  width:620px;
+  height:620px;
+  right:-250px;
+  bottom:-280px;
+  background:radial-gradient(circle,rgba(255,62,158,.14),rgba(255,62,158,0) 68%);
+  animation:auth-orbit-b 15s ease-in-out infinite alternate;
+}
+@keyframes auth-orbit-a{
+  from{transform:translate3d(0,0,0) scale(1);}
+  to{transform:translate3d(80px,60px,0) scale(1.12);}
+}
+@keyframes auth-orbit-b{
+  from{transform:translate3d(0,0,0) scale(1);}
+  to{transform:translate3d(-70px,-50px,0) scale(1.08);}
+}
+.v-auth-wrap > .v-auth-card{
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.012)),
+    rgba(21,23,29,.88);
+  border:1px solid rgba(214,255,63,.16);
+  border-radius:24px;
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.48),
+    0 0 0 1px rgba(255,255,255,.025) inset,
+    0 0 70px rgba(214,255,63,.045);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  padding:42px 38px 34px;
+  animation:auth-card-in .65s cubic-bezier(.2,.8,.2,1) both;
+}
+.v-auth-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--komora),var(--pink),transparent);
+  opacity:.75;
+}
+.v-auth-card::after{
+  content:"";
+  position:absolute;
+  width:180px;
+  height:180px;
+  right:-105px;
+  top:-105px;
+  border:1px solid rgba(214,255,63,.18);
+  border-radius:50%;
+  box-shadow:0 0 0 24px rgba(214,255,63,.025),0 0 0 48px rgba(214,255,63,.018);
+  pointer-events:none;
+}
+@keyframes auth-card-in{
+  from{opacity:0;transform:translateY(20px) scale(.985);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.v-auth-card h1{
+  position:relative;
+  letter-spacing:.02em;
+  font-size:clamp(30px,5vw,42px);
+  text-shadow:0 0 28px rgba(214,255,63,.08);
+}
+.v-auth-card h1::after{
+  content:"";
+  display:block;
+  width:42px;
+  height:3px;
+  margin:13px auto 0;
+  background:linear-gradient(90deg,var(--komora),var(--pink));
+  box-shadow:0 0 18px rgba(214,255,63,.3);
+}
+.v-auth-sub{
+  line-height:1.6;
+  max-width:42ch;
+  margin-left:auto;
+  margin-right:auto;
+}
+.v-field{
+  position:relative;
+  margin-bottom:19px;
+}
+.v-field label{
+  color:#aeb3bd;
+  letter-spacing:.08em;
+  transition:color .2s ease,transform .2s ease;
+}
+.v-input,.v-select,textarea.v-input{
+  border-radius:12px;
+  border-color:rgba(255,255,255,.09);
+  background:rgba(7,8,11,.52);
+  min-height:48px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.015) inset;
+  transition:
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background .22s ease,
+    transform .22s ease;
+}
+.v-input:hover,.v-select:hover,textarea.v-input:hover{
+  border-color:rgba(214,255,63,.28);
+  background:rgba(7,8,11,.68);
+}
+.v-input:focus,.v-select:focus,textarea.v-input:focus{
+  border-color:var(--komora);
+  background:rgba(7,8,11,.76);
+  box-shadow:
+    0 0 0 3px rgba(214,255,63,.08),
+    0 0 28px rgba(214,255,63,.08);
+  transform:translateY(-1px);
+}
+.v-input::placeholder{opacity:.6;}
+.v-form-actions{
+  margin-top:24px;
+}
+.v-btn-komora.block{
+  position:relative;
+  overflow:hidden;
+  border-radius:12px;
+  min-height:50px;
+  background:linear-gradient(100deg,var(--komora),#efffa1 48%,var(--komora));
+  background-size:220% 100%;
+  box-shadow:0 12px 30px rgba(214,255,63,.12);
+  transition:transform .22s ease,box-shadow .22s ease,background-position .45s ease;
+}
+.v-btn-komora.block::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.48) 48%,transparent 68%);
+  transform:translateX(-120%);
+  transition:transform .65s ease;
+}
+.v-btn-komora.block:hover{
+  transform:translateY(-2px);
+  background-position:100% 0;
+  box-shadow:0 16px 38px rgba(214,255,63,.2);
+}
+.v-btn-komora.block:hover::before{
+  transform:translateX(120%);
+}
+.v-btn-komora.block:active{
+  transform:translateY(0);
+}
+.v-auth-foot{
+  margin-top:24px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.v-auth-foot a{
+  position:relative;
+  transition:color .2s ease;
+}
+.v-auth-foot a:hover{
+  color:#efffa1;
+  text-shadow:0 0 16px rgba(214,255,63,.28);
+}
+.v-alert{
+  border-radius:12px;
+  backdrop-filter:blur(10px);
+  animation:auth-alert-in .35s ease both;
+}
+@keyframes auth-alert-in{
+  from{opacity:0;transform:translateY(-6px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* Customer authentication: a small ambient HUD accent behind the card. */
+.v-auth-wrap:not(:has(.v-auth-brand))::before{
+  background:radial-gradient(circle,rgba(214,255,63,.11),rgba(214,255,63,0) 68%);
+}
+.v-auth-wrap:not(:has(.v-auth-brand))::after{
+  background:radial-gradient(circle,rgba(85,231,255,.10),rgba(85,231,255,0) 68%);
+}
+
+/* Admin authentication gets a separate command-center treatment. */
+.v-auth-wrap:has(.v-auth-brand){
+  padding-top:52px;
+}
+.v-auth-brand{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-bottom:22px;
+  animation:auth-brand-in .55s ease both;
+}
+@keyframes auth-brand-in{
+  from{opacity:0;transform:translateY(-8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.v-auth-brand .v-mark{
+  font-size:42px;
+  filter:drop-shadow(0 0 18px rgba(214,255,63,.12));
+}
+.v-auth-brand .v-admin-tag{
+  margin:0;
+  border-color:rgba(255,62,158,.45);
+  color:var(--pink);
+  border-radius:999px;
+  padding:5px 11px;
+  background:rgba(255,62,158,.06);
+  box-shadow:0 0 20px rgba(255,62,158,.06);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-auth-card{
+  border-color:rgba(255,62,158,.18);
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.52),
+    0 0 80px rgba(255,62,158,.045);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-auth-card::before{
+  background:linear-gradient(90deg,transparent,var(--pink),var(--komora),transparent);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-btn-komora.block{
+  background:linear-gradient(100deg,var(--pink),#ff9bd0 48%,var(--pink));
+  background-size:220% 100%;
+  box-shadow:0 12px 30px rgba(255,62,158,.14);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-btn-komora.block:hover{
+  box-shadow:0 16px 38px rgba(255,62,158,.22);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-auth-foot a{
+  color:var(--pink);
+}
+.v-auth-wrap:has(.v-auth-brand) .v-input:focus,
+.v-auth-wrap:has(.v-auth-brand) .v-select:focus,
+.v-auth-wrap:has(.v-auth-brand) textarea.v-input:focus{
+  border-color:var(--pink);
+  box-shadow:
+    0 0 0 3px rgba(255,62,158,.08),
+    0 0 28px rgba(255,62,158,.08);
+}
+
+/* Subtle futuristic grid/noise illusion without adding image assets. */
+.v-auth-wrap{
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:linear-gradient(to bottom,transparent 0%,black 12%,black 88%,transparent 100%);
+}
+.v-auth-wrap::marker{display:none;}
+
+@media(max-width:560px){
+  .v-auth-wrap{
+    min-height:calc(100vh - 36px);
+    padding:42px 16px 70px;
+  }
+  .v-auth-wrap > .v-auth-card{
+    padding:34px 20px 28px;
+    border-radius:20px;
+  }
+  .v-auth-card.wide{
+    max-width:100%;
+  }
+  .v-auth-brand .v-mark{
+    font-size:34px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .v-auth-wrap::before,
+  .v-auth-wrap::after,
+  .v-auth-card,
+  .v-auth-brand,
+  .v-alert{
+    animation:none!important;
+  }
+}
