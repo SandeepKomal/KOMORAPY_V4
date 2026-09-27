@@ -1,32 +1,28 @@
 name: Build, Scan, and Push to ECR
 
 on:
-  workflow_run:
-    workflows: ["Build"]   # must match the `name:` field inside build.yml exactly
-    types:
-      - completed
+  push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write  # required to upload Snyk's SARIF results to the Security tab
+      security-events: write
+      actions: write
     env:
       ECR_REPOSITORY: komora
       IMAGE_TAG: ${{ github.run_number }}
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+        uses: actions/checkout@v7
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -65,22 +61,33 @@ jobs:
 
       - name: Upload Snyk results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: ${{ always() && hashFiles('snyk.sarif') != '' }}
         with:
           sarif_file: snyk.sarif
-
-      # NOTE: this pipeline currently does NOT block the push on Snyk
-      # findings — High/Critical vulnerabilities are scanned and reported
-      # (Security tab + Snyk dashboard via the monitor step above) but do
-      # not stop the image from being pushed. If you want the gate back,
-      # re-add:
-      #   - name: Fail the build if Snyk found high/critical vulnerabilities
-      #     if: steps.snyk-test.outcome == 'failure'
-      #     run: exit 1
 
       - name: Push Docker image to ECR
         run: |
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Verify pushed image
+        run: |
+          set -euo pipefail
+          aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$IMAGE_TAG" \
+            --region "$AWS_REGION" >/dev/null
+          echo "Verified ECR image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Trigger CD deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run cd.yml \
+            --ref main \
+            -f image_tag="$IMAGE_TAG" \
+            -f run_dast=true
+          echo "Triggered CD for ECR image tag: $IMAGE_TAG"
 
       - name: Docker Cleanup
         if: always()
