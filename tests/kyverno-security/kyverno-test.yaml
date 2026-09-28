@@ -104,8 +104,8 @@ results:
       - insecure-pod
     kind: Pod
     result: fail
-  - policy: komora-disallow-latest
-    rule: disallow-latest-tag
+  - policy: komora-require-image-digest
+    rule: require-image-digest
     resources:
       - compliant-pod
     kind: Pod
