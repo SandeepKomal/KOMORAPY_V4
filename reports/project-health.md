@@ -3,16 +3,16 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-09-28 21:03 UTC
+Last updated: 2026-09-28 23:15 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Auto-format (scheduled PR, Dependabot-style)
-- Result: OK success
+- Workflow: Build, Scan, and Push to ECR
+- Result: CANCELLED cancelled
 - Branch: main
-- Commit: d4c7b9d
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36483481612
+- Commit: 6f33fc5
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/36456202186
 
 ## Recent CI Activity
 
