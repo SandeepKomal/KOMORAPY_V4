@@ -51,3 +51,42 @@
 
 
 
+
+## Kubernetes security implementation
+
+KOMORA implements the Kubernetes security controls documented in the companion `KIND-k8s` lab, but these controls are applied to the real application deployment here.
+
+### Runtime hardening
+
+- Restricted Pod Security Admission labels on the `komora` namespace
+- Dedicated ServiceAccount with token automount disabled
+- Non-root UID/GID (10001)
+- RuntimeDefault seccomp profile
+- Privilege escalation disabled
+- All Linux capabilities dropped
+- Read-only container root filesystem
+- Writable `emptyDir` mounts only for application uploads and `/tmp`
+- CPU and memory requests/limits
+
+### Network security
+
+- Default-deny ingress and egress
+- Explicit application ingress on TCP/8080
+- DNS egress to CoreDNS
+- MySQL/TCP 3306 egress for the external RDS dependency
+
+The RDS security group remains the authoritative destination-level network boundary because standard Kubernetes NetworkPolicy cannot select an arbitrary external RDS hostname.
+
+### Identity and authorization
+
+KOMORA does not need the Kubernetes API, so its ServiceAccount has no Kubernetes permissions. A namespace-scoped empty Role/RoleBinding makes that intent explicit and provides a clear extension point if a future component genuinely needs Kubernetes API access.
+
+### Resource governance
+
+The namespace has a ResourceQuota and LimitRange to constrain aggregate and per-container resource consumption.
+
+### Validation
+
+The CD workflow performs server-side dry-run validation of the security manifests before applying the application workload. The security test pod can be used as a disposable runtime validation workload.
+
+For the conceptual explanation and reusable lab exercises, see the companion `KIND-k8s` repository.
