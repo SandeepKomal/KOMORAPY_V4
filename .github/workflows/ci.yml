@@ -94,11 +94,7 @@ jobs:
         id: image
         run: |
           set -euo pipefail
-          DIGEST="$(aws ecr describe-images \
-            --repository-name "$ECR_REPOSITORY" \
-            --image-ids imageTag="$IMAGE_TAG" \
-            --region "$AWS_REGION" \
-            --query 'imageDetails[0].imageDigest' --output text)"
+          DIGEST="$(aws ecr describe-images             --repository-name "$ECR_REPOSITORY"             --image-ids imageTag="$IMAGE_TAG"             --region "$AWS_REGION"             --query 'imageDetails[0].imageDigest' --output text)"
           test -n "$DIGEST"
           IMAGE_DIGEST="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
@@ -117,37 +113,50 @@ jobs:
         env:
           IMAGE_DIGEST: ${{ steps.image.outputs.image }}
         run: |
-          cosign verify "$IMAGE_DIGEST" \
-            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
-            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+          cosign verify "$IMAGE_DIGEST"             --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"             --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
 
       - name: Attach SBOM attestation
         env:
           IMAGE_DIGEST: ${{ steps.image.outputs.image }}
         run: |
-          cosign attest --yes \
-            --predicate "komora-${IMAGE_TAG}.spdx.json" \
-            --type spdxjson \
-            "$IMAGE_DIGEST"
+          cosign attest --yes             --predicate "komora-${IMAGE_TAG}.spdx.json"             --type spdxjson             "$IMAGE_DIGEST"
 
       - name: Verify SBOM attestation
         env:
           IMAGE_DIGEST: ${{ steps.image.outputs.image }}
         run: |
-          cosign verify-attestation "$IMAGE_DIGEST" \
-            --type spdxjson \
-            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
-            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+          set -euo pipefail
+
+          ATTESTATION_FILE="$(mktemp)"
+          trap 'rm -f "$ATTESTATION_FILE"' EXIT
+
+          echo "==> Verifying SPDX attestation for $IMAGE_DIGEST"
+
+          for attempt in 1 2; do
+            echo "Attestation verification attempt $attempt/2"
+
+            if cosign verify-attestation "$IMAGE_DIGEST"               --type spdxjson               --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main"               --certificate-oidc-issuer="https://token.actions.githubusercontent.com"               --timeout 90s               --output json > "$ATTESTATION_FILE"; then
+
+              test -s "$ATTESTATION_FILE"
+              echo "SBOM attestation verified successfully."
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 1 ]; then
+              echo "::warning::Cosign attestation verification did not complete on the first attempt; retrying."
+              sleep 5
+            fi
+          done
+
+          echo "::error::SBOM attestation verification failed after 2 attempts."
+          exit 1
 
       - name: Trigger CD deployment
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run cd.yml \
-            --ref main \
-            -f image_tag="$IMAGE_TAG" \
-            -f run_dast=true
+          gh workflow run cd.yml             --ref main             -f image_tag="$IMAGE_TAG"             -f run_dast=true
           echo "Triggered CD for ECR image tag: $IMAGE_TAG"
 
       - name: Docker Cleanup
