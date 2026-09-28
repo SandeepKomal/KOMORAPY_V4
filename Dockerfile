@@ -19,7 +19,9 @@ COPY . .
 
 # Uploaded product/user images live outside the app code so they can be
 # bind-mounted independently (same reasoning as the old PHP setup).
-RUN mkdir -p /data/uploads/products /data/uploads/users
+RUN mkdir -p /data/uploads/products /data/uploads/users &&     groupadd --system --gid 10001 komora &&     useradd --system --uid 10001 --gid 10001 --no-create-home komora &&     chown -R 10001:10001 /data/uploads
+
+USER 10001:10001
 
 EXPOSE 8080
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "3", \
