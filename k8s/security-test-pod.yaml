@@ -1,0 +1,31 @@
+# Optional disposable validation pod. Do not deploy this as part of the application.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: komora-security-test
+  namespace: komora
+spec:
+  restartPolicy: Never
+  serviceAccountName: komorapy
+  automountServiceAccountToken: false
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: ["sh", "-c", "id && sleep 5"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 5m
+          memory: 8Mi
+        limits:
+          cpu: 20m
+          memory: 16Mi
