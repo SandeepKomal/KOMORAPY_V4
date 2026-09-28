@@ -168,6 +168,23 @@ jobs:
             kubectl -n "$NAMESPACE" run "$SMOKE_POD" \
               --restart=Never \
               --image=curlimages/curl:8.10.1 \
+              --labels=security.komora.io/role=smoke-test \
+              --overrides='{
+                "spec": {
+                  "automountServiceAccountToken": false,
+                  "securityContext": {
+                    "runAsNonRoot": true,
+                    "seccompProfile": {"type": "RuntimeDefault"}
+                  },
+                  "containers": [{
+                    "name": "'"$SMOKE_POD"'",
+                    "securityContext": {
+                      "allowPrivilegeEscalation": false,
+                      "capabilities": {"drop": ["ALL"]}
+                    }
+                  }]
+                }
+              }' \
               --command -- curl --fail --silent --show-error \
               --max-time 15 \
               http://komorapy.komora.svc.cluster.local:8080/
