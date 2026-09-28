@@ -252,9 +252,9 @@ spec:
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: komora-disallow-latest
+  name: komora-require-image-digest
   annotations:
-    policies.kyverno.io/title: Disallow mutable latest image tags
+    policies.kyverno.io/title: Require immutable image digests
     policies.kyverno.io/category: Software Supply Chain Security
     policies.kyverno.io/severity: high
 spec:
@@ -270,15 +270,11 @@ spec:
               namespaces:
                 - komora
       validate:
-        message: "KOMORA images must not use the mutable latest tag."
+        message: "KOMORA images must be referenced by an immutable sha256 digest."
         foreach:
           - list: "request.object.spec.[ephemeralContainers, initContainers, containers][]"
-            deny:
-              conditions:
-                any:
-                  - key: "{{ element.image }}"
-                    operator: EndsWith
-                    value: ":latest"
+            pattern:
+              image: "*@sha256:*"
 ---
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
