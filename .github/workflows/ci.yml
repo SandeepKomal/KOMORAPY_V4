@@ -70,7 +70,7 @@ jobs:
       - name: Trivy container vulnerability gate
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           format: table
           exit-code: '1'
           ignore-unfixed: true
@@ -80,7 +80,7 @@ jobs:
       - name: Generate container SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           format: spdx-json
           output-file: komora-${{ env.IMAGE_TAG }}.spdx.json
           artifact-name: komora-${{ env.IMAGE_TAG }}.spdx.json
