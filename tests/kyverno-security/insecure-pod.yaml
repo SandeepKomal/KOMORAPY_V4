@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-pod
+  namespace: komora
+spec:
+  serviceAccountName: default
+  automountServiceAccountToken: true
+  hostNetwork: true
+  hostPID: true
+  hostIPC: true
+  securityContext:
+    runAsUser: 0
+    seccompProfile:
+      type: Unconfined
+  containers:
+    - name: app
+      image: example.invalid/komora:latest
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        capabilities:
+          add:
+            - SYS_ADMIN
+      resources: {}

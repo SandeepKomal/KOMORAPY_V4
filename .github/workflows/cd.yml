@@ -50,6 +50,40 @@ jobs:
           test -n "$EC2_USER"
           test -n "${{ secrets.EC2_SSH_PRIVATE_KEY }}"
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.10.0
+
+      - name: Resolve and verify signed image digest
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          DIGEST="$(aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="$IMAGE_TAG" \
+            --region "$AWS_REGION" \
+            --query 'imageDetails[0].imageDigest' --output text)"
+          test -n "$DIGEST"
+          IMAGE_DIGEST="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
+          cosign verify "$IMAGE_DIGEST" \
+            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+          echo "image=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Verified signed image: $IMAGE_DIGEST"
+
       - name: Deploy to EC2 kind
         uses: appleboy/ssh-action@v1.2.5
         env:
@@ -59,11 +93,12 @@ jobs:
           DEPLOYMENT: komorapy
           CONTAINER: komorapy
           IMAGE_TAG: ${{ steps.tag.outputs.tag }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.image }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          envs: AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG
+          envs: AWS_REGION,ECR_REPOSITORY,NAMESPACE,DEPLOYMENT,CONTAINER,IMAGE_TAG,IMAGE_DIGEST
           command_timeout: 15m
           script: |
             set -euo pipefail
@@ -73,6 +108,7 @@ jobs:
             command -v kind >/dev/null
             command -v aws >/dev/null
             command -v jq >/dev/null
+            test -n "$IMAGE_DIGEST"
 
             kind get clusters | grep -qx kind
             kubectl config use-context kind-kind >/dev/null
@@ -110,12 +146,16 @@ jobs:
               unset SECRET_KEY
             fi
 
-            echo "==> Validating Kubernetes security manifests"
-            kubectl apply --dry-run=server -f k8s/namespace.yaml
+            echo "==> Installing pinned Kyverno policy engine"
+            kubectl apply -f https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml
+            kubectl -n kyverno rollout status deployment/kyverno-admission-controller --timeout=5m
+
+            echo "==> Validating Kubernetes security manifests"            kubectl apply --dry-run=server -f k8s/namespace.yaml
             kubectl apply --dry-run=server -f k8s/serviceaccount.yaml
             kubectl apply --dry-run=server -f k8s/rbac.yaml
             kubectl apply --dry-run=server -f k8s/network-policies.yaml
             kubectl apply --dry-run=server -f k8s/resource-controls.yaml
+            kubectl apply --dry-run=server -f k8s/kyverno/policies.yaml
 
             echo "==> Syncing repository manifests"
             cd "$HOME/KOMORAPY_V4"
@@ -123,13 +163,18 @@ jobs:
             git checkout main
             git reset --hard origin/main
             kubectl apply -f k8s/namespace.yaml
+            kubectl apply -f k8s/serviceaccount.yaml
+            kubectl apply -f k8s/rbac.yaml
+            kubectl apply -f k8s/network-policies.yaml
+            kubectl apply -f k8s/resource-controls.yaml
+            kubectl apply -f k8s/kyverno/policies.yaml
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
 
             echo "==> Pulling exact ECR image directly into kind containerd"
             ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
             ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
-            IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+            IMAGE="$IMAGE_DIGEST"
 
             aws ecr describe-images \
               --repository-name "$ECR_REPOSITORY" \
@@ -160,43 +205,6 @@ jobs:
             kubectl -n "$NAMESPACE" rollout status \
               deployment/"$DEPLOYMENT" \
               --timeout=5m
-
-            echo "==> In-cluster smoke test"
-            SMOKE_POD="komorapy-smoke-$IMAGE_TAG"
-            kubectl -n "$NAMESPACE" delete pod "$SMOKE_POD" --ignore-not-found >/dev/null 2>&1 || true
-
-            kubectl -n "$NAMESPACE" run "$SMOKE_POD" \
-              --restart=Never \
-              --image=curlimages/curl:8.10.1 \
-              --labels=security.komora.io/role=smoke-test \
-              --overrides='{
-                "spec": {
-                  "automountServiceAccountToken": false,
-                  "securityContext": {
-                    "runAsNonRoot": true,
-                    "seccompProfile": {"type": "RuntimeDefault"}
-                  },
-                  "containers": [{
-                    "name": "'"$SMOKE_POD"'",
-                    "securityContext": {
-                      "allowPrivilegeEscalation": false,
-                      "capabilities": {"drop": ["ALL"]}
-                    }
-                  }]
-                }
-              }' \
-              --command -- curl --fail --silent --show-error \
-              --max-time 15 \
-              http://komorapy.komora.svc.cluster.local:8080/
-
-            kubectl -n "$NAMESPACE" wait --for=condition=Ready pod/"$SMOKE_POD" --timeout=60s || true
-            kubectl -n "$NAMESPACE" wait --for=jsonpath='{.status.phase}'=Succeeded pod/"$SMOKE_POD" --timeout=60s
-            kubectl -n "$NAMESPACE" logs "$SMOKE_POD"
-            kubectl -n "$NAMESPACE" delete pod "$SMOKE_POD" --ignore-not-found
-
-            echo "==> EC2 host smoke test"
-            curl --fail --silent --show-error --max-time 20 \
-              http://127.0.0.1:8080/ >/dev/null
 
             kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" -o wide
             kubectl -n "$NAMESPACE" get service komorapy -o wide

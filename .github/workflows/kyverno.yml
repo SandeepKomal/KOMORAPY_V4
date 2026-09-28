@@ -1,0 +1,32 @@
+name: Kubernetes Policy Validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kyverno:
+    name: Validate Kubernetes security policies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Kyverno CLI
+        uses: kyverno/action-install-cli@v0.2.0
+        with:
+          release: v1.16.2
+
+      - name: Check Kyverno version
+        run: kyverno version
+
+      - name: Validate KOMORA manifests against policies
+        run: |
+          kyverno apply k8s/kyverno/policies.yaml             -r k8s/deployment.yaml             -r k8s/serviceaccount.yaml             --namespace komora
+
+      - name: Run negative policy tests
+        run: kyverno test tests/kyverno-security

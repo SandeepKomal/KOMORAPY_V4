@@ -13,7 +13,9 @@ jobs:
       contents: read
       security-events: write
       actions: write
+      id-token: write
     env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
       ECR_REPOSITORY: komora
       IMAGE_TAG: ${{ github.run_number }}
 
@@ -65,18 +67,77 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
+      - name: Trivy container vulnerability gate
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Generate container SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          format: spdx-json
+          output-file: komora-${{ env.IMAGE_TAG }}.spdx.json
+          artifact-name: komora-${{ env.IMAGE_TAG }}.spdx.json
+          upload-artifact: true
+
       - name: Push Docker image to ECR
         run: |
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Verify pushed image
+      - name: Verify pushed image and resolve digest
+        id: image
         run: |
           set -euo pipefail
-          aws ecr describe-images \
+          DIGEST="$(aws ecr describe-images \
             --repository-name "$ECR_REPOSITORY" \
             --image-ids imageTag="$IMAGE_TAG" \
-            --region "$AWS_REGION" >/dev/null
-          echo "Verified ECR image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+            --region "$AWS_REGION" \
+            --query 'imageDetails[0].imageDigest' --output text)"
+          test -n "$DIGEST"
+          IMAGE_DIGEST="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Verified ECR image: $IMAGE_DIGEST"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.10.0
+
+      - name: Sign immutable image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.image }}
+        run: cosign sign --yes "$IMAGE_DIGEST"
+
+      - name: Verify signed image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.image }}
+        run: |
+          cosign verify "$IMAGE_DIGEST" \
+            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+
+      - name: Attach SBOM attestation
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.image }}
+        run: |
+          cosign attest --yes \
+            --predicate "komora-${IMAGE_TAG}.spdx.json" \
+            --type spdxjson \
+            "$IMAGE_DIGEST"
+
+      - name: Verify SBOM attestation
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.image }}
+        run: |
+          cosign verify-attestation "$IMAGE_DIGEST" \
+            --type spdxjson \
+            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
 
       - name: Trigger CD deployment
         env:
