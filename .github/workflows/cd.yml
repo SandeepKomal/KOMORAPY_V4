@@ -147,7 +147,7 @@ jobs:
             fi
 
             echo "==> Installing pinned Kyverno policy engine"
-            kubectl apply --server-side -f https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml
+            kubectl apply --server-side --force-conflicts -f https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml
             kubectl -n kyverno rollout status deployment/kyverno-admission-controller --timeout=5m
 
             echo "==> Validating Kubernetes security manifests"
