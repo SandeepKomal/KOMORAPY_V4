@@ -298,8 +298,15 @@ spec:
                 - komora
       validate:
         message: "KOMORA pods cannot share host namespaces."
-        pattern:
-          spec:
-            hostNetwork: false
-            hostPID: false
-            hostIPC: false
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.hostNetwork || `false` }}"
+                operator: Equals
+                value: true
+              - key: "{{ request.object.spec.hostPID || `false` }}"
+                operator: Equals
+                value: true
+              - key: "{{ request.object.spec.hostIPC || `false` }}"
+                operator: Equals
+                value: true
