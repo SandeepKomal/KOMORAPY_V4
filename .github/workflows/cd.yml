@@ -147,10 +147,11 @@ jobs:
             fi
 
             echo "==> Installing pinned Kyverno policy engine"
-            kubectl apply -f https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml
+            kubectl apply --server-side -f https://github.com/kyverno/kyverno/releases/download/v1.16.2/install.yaml
             kubectl -n kyverno rollout status deployment/kyverno-admission-controller --timeout=5m
 
-            echo "==> Validating Kubernetes security manifests"            kubectl apply --dry-run=server -f k8s/namespace.yaml
+            echo "==> Validating Kubernetes security manifests"
+            kubectl apply --dry-run=server -f k8s/namespace.yaml
             kubectl apply --dry-run=server -f k8s/serviceaccount.yaml
             kubectl apply --dry-run=server -f k8s/rbac.yaml
             kubectl apply --dry-run=server -f k8s/network-policies.yaml
