@@ -203,9 +203,30 @@ jobs:
               deployment/"$DEPLOYMENT" \
               "$CONTAINER=$IMAGE"
 
-            kubectl -n "$NAMESPACE" rollout status \
+            if ! kubectl -n "$NAMESPACE" rollout status \
               deployment/"$DEPLOYMENT" \
-              --timeout=5m
+              --timeout=5m; then
+              echo "==> Deployment rollout failed; collecting diagnostics"
+
+              kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" -o wide || true
+              kubectl -n "$NAMESPACE" get replicasets -o wide || true
+              kubectl -n "$NAMESPACE" get pods -o wide || true
+
+              echo "==> Pod descriptions"
+              kubectl -n "$NAMESPACE" describe pods || true
+
+              echo "==> Recent Kubernetes events"
+              kubectl -n "$NAMESPACE" get events --sort-by='.lastTimestamp' || true
+
+              echo "==> Kyverno policy reports"
+              kubectl get policyreports -A || true
+              kubectl get clusterpolicyreports -A || true
+
+              echo "==> Kyverno admission controller logs"
+              kubectl -n kyverno logs deployment/kyverno-admission-controller --tail=200 || true
+
+              exit 1
+            fi
 
             kubectl -n "$NAMESPACE" get deployment "$DEPLOYMENT" -o wide
             kubectl -n "$NAMESPACE" get service komorapy -o wide
