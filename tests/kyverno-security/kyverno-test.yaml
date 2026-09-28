@@ -1,0 +1,130 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: komora-security
+policies:
+  - ../../k8s/kyverno/policies.yaml
+resources:
+  - compliant-pod.yaml
+  - insecure-pod.yaml
+results:
+  - policy: komora-require-non-root
+    rule: require-run-as-non-root
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-non-root
+    rule: require-run-as-non-root
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-disallow-privileged
+    rule: disallow-privileged
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-disallow-privileged
+    rule: disallow-privileged
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-disallow-privilege-escalation
+    rule: require-no-privilege-escalation
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-disallow-privilege-escalation
+    rule: require-no-privilege-escalation
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-require-seccomp
+    rule: require-runtime-default-seccomp
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-seccomp
+    rule: require-runtime-default-seccomp
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-require-drop-all
+    rule: require-drop-all-capabilities
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-drop-all
+    rule: require-drop-all-capabilities
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-require-read-only-rootfs
+    rule: require-read-only-rootfs
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-read-only-rootfs
+    rule: require-read-only-rootfs
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-require-resources
+    rule: require-requests-and-limits
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-resources
+    rule: require-requests-and-limits
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-require-serviceaccount
+    rule: require-komorapy-serviceaccount
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-require-serviceaccount
+    rule: require-komorapy-serviceaccount
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-disallow-latest
+    rule: disallow-latest-tag
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-disallow-latest
+    rule: disallow-latest-tag
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
+  - policy: komora-disallow-host-namespaces
+    rule: disallow-host-namespaces
+    resources:
+      - compliant-pod
+    kind: Pod
+    result: pass
+  - policy: komora-disallow-host-namespaces
+    rule: disallow-host-namespaces
+    resources:
+      - insecure-pod
+    kind: Pod
+    result: fail
