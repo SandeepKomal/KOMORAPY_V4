@@ -1,0 +1,106 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: komora
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# KOMORA is exposed through a Kind NodePort. The NodePort path is intentionally
+# kept reachable while application egress remains explicitly restricted below.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-komorapy-ingress
+  namespace: komora
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: komorapy
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+---
+# Kubernetes NetworkPolicy cannot match an RDS hostname. This policy therefore
+# permits only MySQL/TCP egress; the RDS security group remains the authoritative
+# network boundary for the actual database endpoint.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-rds-egress
+  namespace: komora
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: komorapy
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 3306
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: komora
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: komorapy
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# The CD smoke-test pod is also covered by default-deny. Give it only the
+# DNS and application egress it needs to validate the in-cluster Service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-smoke-test-egress
+  namespace: komora
+spec:
+  podSelector:
+    matchLabels:
+      security.komora.io/role: smoke-test
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: komorapy
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

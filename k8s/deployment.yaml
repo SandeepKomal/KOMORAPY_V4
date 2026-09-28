@@ -15,6 +15,15 @@ spec:
       labels:
         app.kubernetes.io/name: komorapy
     spec:
+      serviceAccountName: komorapy
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: komorapy
           image: komorapy:local
@@ -31,12 +40,13 @@ spec:
           env:
             - name: UPLOAD_ROOT
               value: /data/uploads
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 100m
@@ -61,6 +71,10 @@ spec:
           volumeMounts:
             - name: uploads
               mountPath: /data/uploads
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: uploads
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
