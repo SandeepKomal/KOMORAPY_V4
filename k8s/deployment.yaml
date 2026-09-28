@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: komorapy
-          image: komorapy:local
+          image: komorapy@sha256:0000000000000000000000000000000000000000000000000000000000000000
           imagePullPolicy: Never
           ports:
             - name: http
