@@ -40,6 +40,8 @@ spec:
           env:
             - name: UPLOAD_ROOT
               value: /data/uploads
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
