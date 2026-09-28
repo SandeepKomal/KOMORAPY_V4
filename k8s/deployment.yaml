@@ -17,6 +17,9 @@ spec:
     spec:
       serviceAccountName: komorapy
       automountServiceAccountToken: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
