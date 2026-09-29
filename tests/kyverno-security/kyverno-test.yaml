@@ -110,7 +110,7 @@ results:
       - compliant-pod
     kind: Pod
     result: pass
-  - policy: komora-disallow-latest
+  - policy: komora-require-image-digest
     rule: disallow-latest-tag
     resources:
       - insecure-pod
