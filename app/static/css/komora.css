@@ -417,18 +417,19 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
 .v-auth-wrap > .v-auth-card{
   position:relative;
   overflow:hidden;
+  width:min(100%,380px);
+  margin:0 auto;
   background:
     linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.012)),
     rgba(21,23,29,.88);
   border:1px solid rgba(214,255,63,.16);
-  border-radius:24px;
+  border-radius:18px;
   box-shadow:
-    0 30px 90px rgba(0,0,0,.48),
-    0 0 0 1px rgba(255,255,255,.025) inset,
-    0 0 70px rgba(214,255,63,.045);
+    0 24px 60px rgba(0,0,0,.42),
+    0 0 0 1px rgba(255,255,255,.025) inset;
   backdrop-filter:blur(22px);
   -webkit-backdrop-filter:blur(22px);
-  padding:42px 38px 34px;
+  padding:28px 24px 24px;
   animation:auth-card-in .65s cubic-bezier(.2,.8,.2,1) both;
 }
 .v-auth-card::before{
@@ -458,8 +459,8 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
 .v-auth-card h1{
   position:relative;
   letter-spacing:.02em;
-  font-size:clamp(30px,5vw,42px);
-  text-shadow:0 0 28px rgba(214,255,63,.08);
+  font-size:32px;
+  text-shadow:0 0 20px rgba(214,255,63,.06);
 }
 .v-auth-card h1::after{
   content:"";
@@ -478,7 +479,7 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
 }
 .v-field{
   position:relative;
-  margin-bottom:19px;
+  margin-bottom:14px;
 }
 .v-field label{
   color:#aeb3bd;
@@ -486,10 +487,19 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
   transition:color .2s ease,transform .2s ease;
 }
 .v-input,.v-select,textarea.v-input{
-  border-radius:12px;
-  border-color:rgba(255,255,255,.09);
-  background:rgba(7,8,11,.52);
-  min-height:48px;
+  display:block;
+  width:100%;
+  height:40px;
+  min-height:40px;
+  padding:0 12px;
+  border-radius:9px;
+  border-color:rgba(255,255,255,.12);
+  background:rgba(7,8,11,.72);
+  color:#f6f8fb !important;
+  -webkit-text-fill-color:#f6f8fb;
+  caret-color:var(--komora);
+  font:500 13px/40px var(--ui);
+  opacity:1;
   box-shadow:0 0 0 1px rgba(255,255,255,.015) inset;
   transition:
     border-color .22s ease,
@@ -509,15 +519,35 @@ table.v-table .v-row-actions .danger:hover{border-color:var(--red);color:var(--r
     0 0 28px rgba(214,255,63,.08);
   transform:translateY(-1px);
 }
-.v-input::placeholder{opacity:.6;}
+.v-input::placeholder{
+  color:#7f8799 !important;
+  -webkit-text-fill-color:#7f8799;
+  opacity:1;
+}
+.v-input:focus{
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff;
+  outline:none;
+}
+.v-input:-webkit-autofill,
+.v-input:-webkit-autofill:hover,
+.v-input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#f6f8fb !important;
+  caret-color:var(--komora);
+  transition:background-color 9999s ease-in-out 0s;
+}
 .v-form-actions{
-  margin-top:24px;
+  margin-top:17px;
 }
 .v-btn-komora.block{
   position:relative;
   overflow:hidden;
-  border-radius:12px;
-  min-height:50px;
+  width:100%;
+  height:40px;
+  min-height:40px;
+  padding:0 16px;
+  border-radius:9px;
+  font-size:12px;
   background:linear-gradient(100deg,var(--komora),#efffa1 48%,var(--komora));
   background-size:220% 100%;
   box-shadow:0 12px 30px rgba(214,255,63,.12);
