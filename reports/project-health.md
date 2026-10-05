@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-05 10:46 UTC
+Last updated: 2026-10-05 12:01 UTC
 
 ## Trigger
 
-- Event: `schedule`
-- Workflow: Manual / Scheduled health check
-- Result: INFO not applicable
+- Event: `workflow_run`
+- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Result: OK success
 - Branch: main
-- Commit: n/a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions
+- Commit: 6c11efc
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37306705094
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Auto-format (scheduled PR, Dependabot-style) | OK success | 6c11efc | 2026-10-05 12:01 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37306705094 |
 | Build, Scan, and Push to ECR | FAILED failure | 6c11efc | 2026-10-05 09:34 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37290808653 |
 | Build, Scan, and Push to ECR | FAILED failure | 9c4cec6 | 2026-10-05 09:32 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37290569265 |
 | Build, Scan, and Push to ECR | FAILED failure | 3ac5a26 | 2026-10-05 09:30 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37290334907 |
@@ -33,8 +34,8 @@ Last updated: 2026-10-05 10:46 UTC
 
 ## Summary
 
-- Workflow runs shown: 12
-- Successful runs: 7
+- Workflow runs shown: 13
+- Successful runs: 8
 - Failed runs: 5
 
 ## Bot Responsibilities
