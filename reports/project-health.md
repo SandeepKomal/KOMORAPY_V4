@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-06 12:01 UTC
+Last updated: 2026-10-06 19:58 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Build, Scan, and Push to ECR
-- Result: FAILED failure
+- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Result: OK success
 - Branch: main
 - Commit: 9ba379a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37460126391
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37522840843
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Auto-format (scheduled PR, Dependabot-style) | OK success | 9ba379a | 2026-10-06 19:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37522840843 |
 | Build, Scan, and Push to ECR | FAILED failure | 9ba379a | 2026-10-06 12:01 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37460126391 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 080f261 | 2026-10-06 11:46 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37458624587 |
 | Build, Scan, and Push to ECR | FAILED failure | 080f261 | 2026-10-06 08:24 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37435683608 |
@@ -27,14 +28,12 @@ Last updated: 2026-10-06 12:01 UTC
 | gitleaks | OK success | 6c11efc | 2026-10-06 08:13 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37434707951 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 6c11efc | 2026-10-06 04:49 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37415480849 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 6c11efc | 2026-10-05 21:48 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37378318448 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 6c11efc | 2026-10-05 12:01 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37306705094 |
-| Build, Scan, and Push to ECR | FAILED failure | 6c11efc | 2026-10-05 09:34 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/37290808653 |
 
 ## Summary
 
-- Workflow runs shown: 11
+- Workflow runs shown: 10
 - Successful runs: 6
-- Failed runs: 5
+- Failed runs: 4
 
 ## Bot Responsibilities
 
