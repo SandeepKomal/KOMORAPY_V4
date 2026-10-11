@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-11 11:52 UTC
+Last updated: 2026-10-11 11:55 UTC
 
 ## Trigger
 
@@ -11,13 +11,14 @@ Last updated: 2026-10-11 11:52 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: FAILED failure
 - Branch: main
-- Commit: fa2e8fa
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137035473
+- Commit: a698096
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137265134
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | FAILED failure | a698096 | 2026-10-11 11:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137265134 |
 | Build, Scan, and Push to ECR | FAILED failure | fa2e8fa | 2026-10-11 11:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137035473 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-11 11:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38134639219 |
 | Build | OK success | acee365 | 2026-10-11 07:59 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38123135225 |
@@ -29,14 +30,12 @@ Last updated: 2026-10-11 11:52 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 23c7e2e | 2026-10-10 15:41 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38064600115 |
 | Build | OK success | 23c7e2e | 2026-10-10 07:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38035762919 |
 | gitleaks | OK success | 23c7e2e | 2026-10-10 07:48 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38035683067 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 23c7e2e | 2026-10-10 05:04 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38026225974 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 23c7e2e | 2026-10-09 23:57 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38006888045 |
 
 ## Summary
 
-- Workflow runs shown: 13
-- Successful runs: 10
-- Failed runs: 3
+- Workflow runs shown: 12
+- Successful runs: 8
+- Failed runs: 4
 
 ## Bot Responsibilities
 
