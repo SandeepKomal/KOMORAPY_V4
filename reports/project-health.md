@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-12 12:12 UTC
+Last updated: 2026-10-12 12:15 UTC
 
 ## Trigger
 
@@ -11,13 +11,14 @@ Last updated: 2026-10-12 12:12 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: FAILED failure
 - Branch: main
-- Commit: c901e66
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247372775
+- Commit: 8f291ba
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247693700
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | FAILED failure | 8f291ba | 2026-10-12 12:15 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247693700 |
 | Build, Scan, and Push to ECR | FAILED failure | c901e66 | 2026-10-12 12:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247372775 |
 | Build | OK success | a698096 | 2026-10-12 08:12 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38222038574 |
 | gitleaks | OK success | a698096 | 2026-10-12 08:10 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38221915974 |
@@ -29,13 +30,12 @@ Last updated: 2026-10-12 12:12 UTC
 | Build, Scan, and Push to ECR | FAILED failure | fa2e8fa | 2026-10-11 11:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137035473 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-11 11:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38134639219 |
 | Build | OK success | acee365 | 2026-10-11 07:59 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38123135225 |
-| gitleaks | OK success | acee365 | 2026-10-11 07:56 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38123050443 |
 
 ## Summary
 
 - Workflow runs shown: 12
-- Successful runs: 9
-- Failed runs: 3
+- Successful runs: 8
+- Failed runs: 4
 
 ## Bot Responsibilities
 
