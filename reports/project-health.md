@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-12 11:14 UTC
+Last updated: 2026-10-12 12:12 UTC
 
 ## Trigger
 
-- Event: `schedule`
-- Workflow: Manual / Scheduled health check
-- Result: INFO not applicable
+- Event: `workflow_run`
+- Workflow: Build, Scan, and Push to ECR
+- Result: FAILED failure
 - Branch: main
-- Commit: n/a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions
+- Commit: c901e66
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247372775
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | FAILED failure | c901e66 | 2026-10-12 12:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247372775 |
 | Build | OK success | a698096 | 2026-10-12 08:12 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38222038574 |
 | gitleaks | OK success | a698096 | 2026-10-12 08:10 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38221915974 |
 | Build | OK success | a698096 | 2026-10-12 07:54 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38220233648 |
@@ -29,13 +30,12 @@ Last updated: 2026-10-12 11:14 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-11 11:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38134639219 |
 | Build | OK success | acee365 | 2026-10-11 07:59 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38123135225 |
 | gitleaks | OK success | acee365 | 2026-10-11 07:56 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38123050443 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-11 03:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38109945995 |
 
 ## Summary
 
 - Workflow runs shown: 12
-- Successful runs: 10
-- Failed runs: 2
+- Successful runs: 9
+- Failed runs: 3
 
 ## Bot Responsibilities
 
