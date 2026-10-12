@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-12 07:54 UTC
+Last updated: 2026-10-12 08:10 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Build
+- Workflow: gitleaks
 - Result: OK success
 - Branch: main
 - Commit: a698096
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38220233648
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38221915974
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| gitleaks | OK success | a698096 | 2026-10-12 08:10 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38221915974 |
 | Build | OK success | a698096 | 2026-10-12 07:54 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38220233648 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | a698096 | 2026-10-12 04:16 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38203123390 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | a698096 | 2026-10-11 23:26 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38184260215 |
@@ -30,13 +31,12 @@ Last updated: 2026-10-12 07:54 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-11 03:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38109945995 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | acee365 | 2026-10-10 23:12 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38094209339 |
 | Build, Scan, and Push to ECR | FAILED failure | acee365 | 2026-10-10 15:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38065698912 |
-| Build, Scan, and Push to ECR | FAILED failure | 67236f3 | 2026-10-10 15:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38065473790 |
 
 ## Summary
 
 - Workflow runs shown: 13
-- Successful runs: 9
-- Failed runs: 4
+- Successful runs: 10
+- Failed runs: 3
 
 ## Bot Responsibilities
 
