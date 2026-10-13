@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-13 05:25 UTC
+Last updated: 2026-10-13 08:36 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Workflow: gitleaks
 - Result: OK success
 - Branch: main
 - Commit: 8f291ba
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38351301017
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370314400
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| gitleaks | OK success | 8f291ba | 2026-10-13 08:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370314400 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-13 05:25 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38351301017 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-12 22:23 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38316312494 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-12 12:44 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38250933203 |
@@ -30,13 +31,12 @@ Last updated: 2026-10-13 05:25 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | a698096 | 2026-10-11 23:26 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38184260215 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | a698096 | 2026-10-11 19:19 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38167504553 |
 | Build, Scan, and Push to ECR | FAILED failure | a698096 | 2026-10-11 11:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137265134 |
-| Build, Scan, and Push to ECR | FAILED failure | fa2e8fa | 2026-10-11 11:51 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38137035473 |
 
 ## Summary
 
 - Workflow runs shown: 13
-- Successful runs: 9
-- Failed runs: 4
+- Successful runs: 10
+- Failed runs: 3
 
 ## Bot Responsibilities
 
