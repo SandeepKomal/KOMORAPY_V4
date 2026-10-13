@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-13 11:06 UTC
+Last updated: 2026-10-13 11:07 UTC
 
 ## Trigger
 
@@ -11,14 +11,14 @@ Last updated: 2026-10-13 11:06 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: FAILED failure
 - Branch: main
-- Commit: 96f14fa
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387761094
+- Commit: 6f37a72
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387919065
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
-| Build, Scan, and Push to ECR | INFO in_progress | 6f37a72 | 2026-10-13 11:06 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387919065 |
+| Build, Scan, and Push to ECR | FAILED failure | 6f37a72 | 2026-10-13 11:07 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387919065 |
 | Build, Scan, and Push to ECR | FAILED failure | 96f14fa | 2026-10-13 11:06 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387761094 |
 | Build | OK success | 8f291ba | 2026-10-13 08:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370486210 |
 | gitleaks | OK success | 8f291ba | 2026-10-13 08:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370314400 |
@@ -35,7 +35,7 @@ Last updated: 2026-10-13 11:06 UTC
 
 - Workflow runs shown: 12
 - Successful runs: 8
-- Failed runs: 3
+- Failed runs: 4
 
 ## Bot Responsibilities
 
