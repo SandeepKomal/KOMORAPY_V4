@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-15 09:03 UTC
+Last updated: 2026-10-15 09:36 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Build, Scan, and Push to ECR
-- Result: FAILED failure
+- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Result: OK success
 - Branch: main
 - Commit: 8bc402a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38709942552
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38714082947
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-15 09:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38714082947 |
 | Build, Scan, and Push to ECR | FAILED failure | 8bc402a | 2026-10-15 09:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38709942552 |
 | Build, Scan, and Push to ECR | FAILED failure | 5519f37 | 2026-10-15 08:56 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38709076872 |
 | Build, Scan, and Push to ECR | FAILED failure | 4224523 | 2026-10-15 08:53 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38708754516 |
@@ -32,8 +33,8 @@ Last updated: 2026-10-15 09:03 UTC
 
 ## Summary
 
-- Workflow runs shown: 11
-- Successful runs: 8
+- Workflow runs shown: 12
+- Successful runs: 9
 - Failed runs: 3
 
 ## Bot Responsibilities
