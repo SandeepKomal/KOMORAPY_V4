@@ -3,38 +3,39 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-13 17:23 UTC
+Last updated: 2026-10-15 08:53 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Auto-format (scheduled PR, Dependabot-style)
-- Result: OK success
+- Workflow: Build, Scan, and Push to ECR
+- Result: FAILED failure
 - Branch: main
-- Commit: 6f37a72
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38437859576
+- Commit: 4224523
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38708754516
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 6f37a72 | 2026-10-13 17:22 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38437859576 |
-| Build, Scan, and Push to ECR | FAILED failure | 6f37a72 | 2026-10-13 11:07 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387919065 |
-| Build, Scan, and Push to ECR | FAILED failure | 96f14fa | 2026-10-13 11:06 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38387761094 |
-| Build | OK success | 8f291ba | 2026-10-13 08:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370486210 |
-| gitleaks | OK success | 8f291ba | 2026-10-13 08:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38370314400 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-13 05:25 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38351301017 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-12 22:23 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38316312494 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 8f291ba | 2026-10-12 12:44 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38250933203 |
-| Build, Scan, and Push to ECR | FAILED failure | 8f291ba | 2026-10-12 12:15 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247693700 |
-| Build, Scan, and Push to ECR | FAILED failure | c901e66 | 2026-10-12 12:11 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38247372775 |
-| Build | OK success | a698096 | 2026-10-12 08:12 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38222038574 |
+| Build, Scan, and Push to ECR | FAILED failure | 4224523 | 2026-10-15 08:53 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38708754516 |
+| Build | OK success | b7acc17 | 2026-10-15 06:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38693514583 |
+| gitleaks | OK success | b7acc17 | 2026-10-15 06:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38693341401 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-15 03:08 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38674722852 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-14 22:58 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38651101937 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-14 19:09 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38621313713 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-14 14:52 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38584381896 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-14 09:55 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38545821962 |
+| Build | OK success | b7acc17 | 2026-10-14 06:52 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38524600514 |
+| gitleaks | OK success | b7acc17 | 2026-10-14 06:49 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38524436983 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-14 03:29 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38506508639 |
+| Auto-format (scheduled PR, Dependabot-style) | OK success | b7acc17 | 2026-10-13 23:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38485179210 |
 
 ## Summary
 
-- Workflow runs shown: 11
-- Successful runs: 7
-- Failed runs: 4
+- Workflow runs shown: 12
+- Successful runs: 11
+- Failed runs: 1
 
 ## Bot Responsibilities
 
