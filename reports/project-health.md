@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-16 08:26 UTC
+Last updated: 2026-10-16 09:29 UTC
 
 ## Trigger
 
-- Event: `schedule`
-- Workflow: Manual / Scheduled health check
-- Result: INFO not applicable
+- Event: `workflow_run`
+- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Result: OK success
 - Branch: main
-- Commit: n/a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions
+- Commit: 8bc402a
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38880715852
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-16 09:28 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38880715852 |
 | Build | OK success | 8bc402a | 2026-10-16 06:32 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38861668765 |
 | gitleaks | OK success | 8bc402a | 2026-10-16 06:30 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38861529750 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-16 03:05 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38843700166 |
@@ -29,7 +30,6 @@ Last updated: 2026-10-16 08:26 UTC
 | Build, Scan, and Push to ECR | FAILED failure | 5519f37 | 2026-10-15 08:56 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38709076872 |
 | Build, Scan, and Push to ECR | FAILED failure | 4224523 | 2026-10-15 08:53 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38708754516 |
 | Build | OK success | b7acc17 | 2026-10-15 06:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38693514583 |
-| gitleaks | OK success | b7acc17 | 2026-10-15 06:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38693341401 |
 
 ## Summary
 
