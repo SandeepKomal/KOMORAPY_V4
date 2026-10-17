@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-17 02:57 UTC
+Last updated: 2026-10-17 06:18 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Workflow: gitleaks
 - Result: OK success
 - Branch: main
 - Commit: 8bc402a
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38996889995
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/39009428255
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| gitleaks | OK success | 8bc402a | 2026-10-17 06:18 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/39009428255 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-17 02:57 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38996889995 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-16 22:30 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38976097369 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-16 18:36 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38948597305 |
@@ -29,14 +30,12 @@ Last updated: 2026-10-17 02:57 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-15 22:53 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38820051691 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-15 18:52 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38789183360 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-15 14:39 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38753307796 |
-| Auto-format (scheduled PR, Dependabot-style) | OK success | 8bc402a | 2026-10-15 09:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38714082947 |
-| Build, Scan, and Push to ECR | FAILED failure | 8bc402a | 2026-10-15 09:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/38709942552 |
 
 ## Summary
 
-- Workflow runs shown: 13
+- Workflow runs shown: 12
 - Successful runs: 12
-- Failed runs: 1
+- Failed runs: 0
 
 ## Bot Responsibilities
 
