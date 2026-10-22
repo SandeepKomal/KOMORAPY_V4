@@ -3,6 +3,6 @@ PyMySQL==1.2.0
 cryptography==50.0.1
 bcrypt==5.0.0
 gunicorn==26.2.0
-Pillow==12.3.0
+Pillow==13.0.0
 #all the dependencies 
 
