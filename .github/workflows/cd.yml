@@ -62,7 +62,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.10.0
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Resolve and verify signed image digest
         id: image
