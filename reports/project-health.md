@@ -3,7 +3,7 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-25 20:00 UTC
+Last updated: 2026-10-25 20:03 UTC
 
 ## Trigger
 
@@ -11,13 +11,14 @@ Last updated: 2026-10-25 20:00 UTC
 - Workflow: Build, Scan, and Push to ECR
 - Result: FAILED failure
 - Branch: main
-- Commit: 27a98e1
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40228562134
+- Commit: ca093a6
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40228805249
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| Build, Scan, and Push to ECR | FAILED failure | ca093a6 | 2026-10-25 20:02 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40228805249 |
 | Build, Scan, and Push to ECR | FAILED failure | 27a98e1 | 2026-10-25 19:59 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40228562134 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 227b583 | 2026-10-25 18:06 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40219658839 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 227b583 | 2026-10-25 14:05 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40200600859 |
@@ -30,13 +31,12 @@ Last updated: 2026-10-25 20:00 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 227b583 | 2026-10-24 13:49 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40099782830 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | 227b583 | 2026-10-24 09:17 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40081342869 |
 | Build | OK success | 227b583 | 2026-10-24 06:38 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40070920436 |
-| gitleaks | OK success | 227b583 | 2026-10-24 06:35 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40070814690 |
 
 ## Summary
 
 - Workflow runs shown: 13
-- Successful runs: 12
-- Failed runs: 1
+- Successful runs: 11
+- Failed runs: 2
 
 ## Bot Responsibilities
 
