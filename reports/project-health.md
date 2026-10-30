@@ -3,21 +3,22 @@
 > Automatically maintained by KOMORA DevOps Bot.
 > This report is generated from recent GitHub Actions workflow runs on main.
 
-Last updated: 2026-10-30 04:19 UTC
+Last updated: 2026-10-30 07:49 UTC
 
 ## Trigger
 
 - Event: `workflow_run`
-- Workflow: Auto-format (scheduled PR, Dependabot-style)
+- Workflow: gitleaks
 - Result: OK success
 - Branch: main
 - Commit: ca093a6
-- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/41002257126
+- Run: https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/41022390361
 
 ## Recent CI Activity
 
 | Workflow | Result | Commit | Updated | Run |
 |---|---|---|---|---|
+| gitleaks | OK success | ca093a6 | 2026-10-30 07:49 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/41022390361 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-30 04:19 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/41002257126 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-29 20:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40945549142 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-29 11:17 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40864215462 |
@@ -26,13 +27,11 @@ Last updated: 2026-10-30 04:19 UTC
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-29 04:19 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40817081791 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-28 20:03 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40759867941 |
 | Auto-format (scheduled PR, Dependabot-style) | OK success | ca093a6 | 2026-10-28 10:57 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40676123052 |
-| Build | OK success | ca093a6 | 2026-10-28 07:39 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40651371885 |
-| gitleaks | OK success | ca093a6 | 2026-10-28 07:36 UTC | https://github.com/SandeepKomal/KOMORAPY_V4/actions/runs/40651207528 |
 
 ## Summary
 
-- Workflow runs shown: 10
-- Successful runs: 10
+- Workflow runs shown: 9
+- Successful runs: 9
 - Failed runs: 0
 
 ## Bot Responsibilities
